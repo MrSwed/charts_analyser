@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -23,7 +23,7 @@ type result struct {
 	err   error
 }
 
-func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint, err error) {
+func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint64, err error) {
 	var file *os.File
 	file, err = os.Open(fileName)
 	if err != nil {
@@ -90,20 +90,21 @@ func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint,
 	return
 }
 
-func importCharts(ctx context.Context, path string, db *sqlx.DB) (filesCount, recordsCount uint, err error) {
+func importCharts(ctx context.Context, path string, db *sqlx.DB) (filesCount, recordsCount uint64) {
 	var (
-		entries []os.DirEntry
-		wg      sync.WaitGroup
-		//m         sync.Mutex
-		fileCount atomic.Uint32
+		entries       []os.DirEntry
+		wg            sync.WaitGroup
+		err           error
+		filesCountA   atomic.Uint64
+		recordsCountA atomic.Uint64
 	)
 	entries, err = os.ReadDir(path)
 	if err != nil {
+		log.Print(err.Error())
 		return
 	}
 	sem := semaphore.New(runtime.NumCPU())
 	wg.Add(len(entries))
-	resChan := make(chan result)
 	for _, e := range entries {
 		go func(fileName string) {
 			sem.Acquire()
@@ -111,29 +112,20 @@ func importCharts(ctx context.Context, path string, db *sqlx.DB) (filesCount, re
 			defer sem.Release()
 
 			rCount, er := importChart(ctx, path+"/"+fileName, db)
-			fileCount.Add(1)
-			res := result{
-				count: rCount,
-			}
+			filesCountA.Add(1)
+			recordsCountA.Add(rCount)
 			if er != nil {
-				res.err = fmt.Errorf("%s: %w", fileName, er)
+				log.Printf("%s: imported %d tracks with errors: %s", fileName, rCount, er.Error())
+			} else {
+				log.Printf("%s: imported %d tracks", fileName, rCount)
+
 			}
-			resChan <- res
 		}(e.Name())
 	}
 
-	go func() {
-		wg.Wait()
-		close(resChan)
-	}()
+	wg.Wait()
 
-	for r := range resChan {
-		recordsCount += r.count
-		if r.err != nil {
-			err = errors.Join(err, r.err)
-		}
-	}
-
-	filesCount = uint(fileCount.Load())
+	recordsCount = recordsCountA.Load()
+	filesCount = filesCountA.Load()
 	return
 }

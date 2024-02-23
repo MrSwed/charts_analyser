@@ -68,12 +68,9 @@ func main() {
 		defer wg.Done()
 		log.Println("Start import tracks..")
 
-		var filesCount, recordsCount uint
-		filesCount, recordsCount, err = importCharts(ctx, conf.ChartsPath, db)
-		if err != nil {
-			log.Println(err)
-		}
-		log.Printf("Imported %d tracks from %d files", recordsCount, filesCount)
+		var filesCount, recordsCount uint64
+		filesCount, recordsCount = importCharts(ctx, conf.ChartsPath, db)
+		log.Printf("Import %d tracks from %d files", recordsCount, filesCount)
 	}()
 
 	wg.Wait()
