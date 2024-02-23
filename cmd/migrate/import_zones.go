@@ -5,17 +5,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/jmoiron/sqlx"
 )
 
 type zones map[string][][]float64
 
-func importZones(ctx context.Context, file string, db *sqlx.DB) (err error) {
+func importZones(ctx context.Context, file string, db *sqlx.DB) (count uint, err error) {
 	var data []byte
 
 	if data, err = os.ReadFile(file); err != nil {
@@ -39,16 +38,13 @@ func importZones(ctx context.Context, file string, db *sqlx.DB) (err error) {
 		}
 	}()
 
-	var (
-		stmt *sqlx.Stmt
-	)
+	var stmt *sqlx.Stmt
 	if stmt, err = tx.PreparexContext(ctx, "INSERT INTO"+" "+DBZones+
 		" (name, geometry) VALUES($1, ST_GeometryFromText($2))"); err != nil {
 		return
 	}
 
 	for name, coords := range zonesData {
-
 		// проверка на замкнутость полигона
 		if coords[0][0] != coords[len(coords)-1][0] || coords[0][1] != coords[len(coords)-1][1] {
 			coords = append(coords, coords[0])
@@ -64,6 +60,7 @@ func importZones(ctx context.Context, file string, db *sqlx.DB) (err error) {
 		if _, err = stmt.ExecContext(ctx, name, coordsStr); err != nil {
 			return
 		}
+		count++
 	}
 	err = tx.Commit()
 

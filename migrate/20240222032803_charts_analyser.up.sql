@@ -8,14 +8,16 @@ create table zones
 
 create table tracks
 (
- id         integer
-  constraint tracks_pk
-   primary key,
- name       varchar(250)   not null,
- time       timestamp not null,
- coordinate geometry(Point, 4326)
+ id          SERIAL primary key,
+ vessel_id   integer,
+ vessel_name varchar(250) not null,
+ time        timestamp    not null,
+ coordinate  geometry(Point, 4326)
 );
 
 create index tracks_time_index
  on tracks (time);
+
+create index tracks_vessel_id_index
+ on tracks (vessel_id);
 

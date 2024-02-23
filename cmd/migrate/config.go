@@ -18,6 +18,7 @@ func NewConfig() *Config {
 		//DatabaseDSN: "",
 		MigrateDataPath: "file://migrate",
 		ZonesFile:       "data/geo_zones.json",
+		ChartsPath:      "data/tracks",
 	}
 }
 
@@ -29,7 +30,7 @@ func (c *Config) withFlags() *Config {
 	flag.StringVar(&c.DatabaseDSN, "d", c.DatabaseDSN, "Database dsn connect string, can set with env "+EnvNameDBDSN)
 	flag.StringVar(&c.MigrateDataPath, "m", c.MigrateDataPath, "Path to migrate and import files, can set with env "+EnvNameMigratePath)
 	flag.StringVar(&c.ZonesFile, "z", c.ZonesFile, "Path to geo zones json file "+EnvNameZonesFile)
-	flag.StringVar(&c.ChartsPath, "c", c.ZonesFile, "Path to charts "+EnvNameChartsPath)
+	flag.StringVar(&c.ChartsPath, "c", c.ChartsPath, "Path to charts "+EnvNameChartsPath)
 
 	flag.Parse()
 	return c

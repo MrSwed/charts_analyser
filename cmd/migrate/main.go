@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"sync"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -17,6 +18,7 @@ func main() {
 		db      *sqlx.DB
 		err     error
 		isNewDB = false
+		wg      sync.WaitGroup
 	)
 	conf := NewConfig().Init()
 	if len(conf.DatabaseDSN) == 0 {
@@ -44,15 +46,37 @@ func main() {
 	isNewDB = versions[0] == 0
 
 	if !isNewDB {
-		log.Println("not new db, no data import")
+		log.Println("not new db, no data import. Done.")
 		return
 	}
 	ctx := context.Background()
-	err = importZones(ctx, conf.ZonesFile, db)
-	if err != nil {
-		log.Println(err)
-	}
 
-	//go importCharts(conf.ChartsPath, db)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		var count uint
+		log.Println("Start import zones..")
+		count, err = importZones(ctx, conf.ZonesFile, db)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Printf("Imported %d zones", count)
+	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Println("Start import tracks..")
+
+		var filesCount, recordsCount uint
+		filesCount, recordsCount, err = importCharts(ctx, conf.ChartsPath, db)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Printf("Imported %d tracks from %d files", recordsCount, filesCount)
+	}()
+
+	wg.Wait()
+
+	log.Println("Import done")
 }
