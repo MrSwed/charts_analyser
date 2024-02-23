@@ -6,6 +6,9 @@ create table zones
  geometry geometry(Polygon, 4326)
 );
 
+create index zones_geometry_index
+ on zones using gist (geometry);
+
 create table tracks
 (
  id          SERIAL primary key,
@@ -21,3 +24,5 @@ create index tracks_time_index
 create index tracks_vessel_id_index
  on tracks (vessel_id);
 
+create index tracks_coordinate_index
+ on tracks using gist (coordinate);
