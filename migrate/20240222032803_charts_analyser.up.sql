@@ -12,7 +12,7 @@ create index zones_geometry_index
 create table tracks
 (
  id          SERIAL primary key,
- vessel_id   integer,
+ vessel_id   bigint,
  vessel_name varchar(250) not null,
  time        timestamp    not null,
  coordinate  geometry(Point, 4326)

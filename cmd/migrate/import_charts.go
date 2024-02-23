@@ -18,11 +18,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type result struct {
-	count uint
-	err   error
-}
-
 func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint64, err error) {
 	var file *os.File
 	file, err = os.Open(fileName)
