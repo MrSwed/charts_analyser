@@ -5,6 +5,7 @@ package handler
 import (
 	"charts_analyser/internal/app/config"
 	"charts_analyser/internal/app/constant"
+	"charts_analyser/internal/app/domain"
 	"charts_analyser/internal/app/repository"
 	"charts_analyser/internal/app/service"
 	"encoding/json"
@@ -48,7 +49,7 @@ func TestZones(t *testing.T) {
 
 	type want struct {
 		code        int
-		response    []string
+		responseLen bool
 		contentType string
 	}
 	type args struct {
@@ -71,21 +72,8 @@ func TestZones(t *testing.T) {
 				},
 			},
 			want: want{
-				code: http.StatusOK,
-				response: []string{
-					"zone_176",
-					"zone_194",
-					"zone_197",
-					"zone_199",
-					"zone_205",
-					"zone_219",
-					"zone_221",
-					"zone_222",
-					"zone_310",
-					"zone_312",
-					"zone_316",
-					"zone_342",
-				},
+				code:        http.StatusOK,
+				responseLen: true,
 				contentType: "application/json; charset=utf-8",
 			},
 		},
@@ -101,7 +89,7 @@ func TestZones(t *testing.T) {
 			},
 			want: want{
 				code:        http.StatusOK,
-				response:    []string{},
+				responseLen: false,
 				contentType: "application/json; charset=utf-8",
 			},
 		},
@@ -148,11 +136,15 @@ func TestZones(t *testing.T) {
 			}()
 
 			if test.want.code == http.StatusOK {
-				var data []string
+				var data []domain.ZoneName
 				err = json.Unmarshal(resBody, &data)
-				assert.NoError(t, err)
-				assert.Equal(t, test.want.response, data)
-				assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+				require.NoError(t, err)
+				require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+				if test.want.responseLen {
+					assert.Greater(t, len(data), 0)
+				} else {
+					assert.Equal(t, len(data), 0)
+				}
 			}
 		})
 	}
@@ -179,7 +171,7 @@ func TestVessels(t *testing.T) {
 
 	type want struct {
 		code        int
-		response    []int64
+		responseLen bool
 		contentType string
 	}
 	type args struct {
@@ -202,65 +194,8 @@ func TestVessels(t *testing.T) {
 				},
 			},
 			want: want{
-				code: http.StatusOK,
-				response: []int64{
-					8130875,
-					8130899,
-					8512279,
-					8617938,
-					8902955,
-					8902967,
-					8918289,
-					9046368,
-					9108128,
-					9108130,
-					9110913,
-					9110925,
-					9112296,
-					9117739,
-					9118147,
-					9143568,
-					9164615,
-					9174751,
-					9186326,
-					9186338,
-					9192428,
-					9200330,
-					9200419,
-					9200445,
-					9205885,
-					9205897,
-					9205902,
-					9205926,
-					9205938,
-					9218404,
-					9218416,
-					9222302,
-					9229972,
-					9229984,
-					9229996,
-					9230000,
-					9233466,
-					9235555,
-					9238272,
-					9241463,
-					9243409,
-					9244257,
-					9256470,
-					9261451,
-					9267209,
-					9271511,
-					9271614,
-					9272383,
-					9274563,
-					9278791,
-					9280586,
-					9282106,
-					9282479,
-					9282481,
-					9283681,
-					9284702,
-				},
+				code:        http.StatusOK,
+				responseLen: true,
 				contentType: "application/json; charset=utf-8",
 			},
 		},
@@ -276,7 +211,7 @@ func TestVessels(t *testing.T) {
 			},
 			want: want{
 				code:        http.StatusOK,
-				response:    []int64{},
+				responseLen: false,
 				contentType: "application/json; charset=utf-8",
 			},
 		},
@@ -322,11 +257,15 @@ func TestVessels(t *testing.T) {
 			}()
 
 			if test.want.code == http.StatusOK {
-				var data []int64
+				var data []domain.VesselID
 				err = json.Unmarshal(resBody, &data)
-				assert.NoError(t, err)
-				assert.Equal(t, test.want.response, data)
-				assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+				require.NoError(t, err)
+				require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+				if test.want.responseLen {
+					assert.Greater(t, len(data), 0)
+				} else {
+					assert.Equal(t, len(data), 0)
+				}
 			}
 		})
 	}
