@@ -17,4 +17,6 @@ const (
 	RouteApi     = "/api"
 	RouteVessels = "/vessels"
 	RouteZones   = "/zones"
+
+	MonitorCurrentInterval = 30 * time.Second
 )
