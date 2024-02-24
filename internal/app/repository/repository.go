@@ -14,8 +14,8 @@ type Repository struct {
 }
 
 type Charts interface {
-	Zones(ctx context.Context, query domain.InputVessels) (zones []string, err error)
-	Vessels(ctx context.Context, query domain.InputZone) (vesselIds []uint64, err error)
+	Zones(ctx context.Context, query domain.InputVessels) (zones []domain.ZoneName, err error)
+	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
 }
 
 func NewRepository(db *sqlx.DB) *Repository {

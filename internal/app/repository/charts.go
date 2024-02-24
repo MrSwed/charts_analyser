@@ -16,7 +16,7 @@ func NewChartsRepository(db *sqlx.DB) *ChartsRepo {
 	return &ChartsRepo{db: db}
 }
 
-func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []string, err error) {
+func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []domain.ZoneName, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
@@ -32,7 +32,7 @@ func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []
 
 	err = r.db.SelectContext(ctx, &zones, sqlStr, args...)
 	if zones == nil {
-		zones = make([]string, 0)
+		zones = make([]domain.ZoneName, 0)
 	}
 	/*
 		 `select name from zones z
@@ -44,7 +44,7 @@ func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []
 	return
 }
 
-func (r *ChartsRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIds []uint64, err error) {
+func (r *ChartsRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs []domain.VesselID, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
@@ -59,9 +59,9 @@ func (r *ChartsRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIds
 		return
 	}
 
-	err = r.db.SelectContext(ctx, &vesselIds, sqlStr, args...)
-	if vesselIds == nil {
-		vesselIds = make([]uint64, 0)
+	err = r.db.SelectContext(ctx, &vesselIDs, sqlStr, args...)
+	if vesselIDs == nil {
+		vesselIDs = make([]domain.VesselID, 0)
 	}
 	/*		`select vessel_id
 	from tracks t

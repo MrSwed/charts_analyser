@@ -17,8 +17,8 @@ func NewService(r *repository.Repository) *Service {
 }
 
 type Vessel interface {
-	Zones(ctx context.Context, query domain.InputVessels) (zones []string, err error)
-	Vessels(ctx context.Context, query domain.InputZone) (vesselIds []uint64, err error)
+	Zones(ctx context.Context, query domain.InputVessels) (zones []domain.ZoneName, err error)
+	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
 }
 
 func NewChartsService(r *repository.Repository) *VesselService {
@@ -29,9 +29,9 @@ type VesselService struct {
 	r *repository.Repository
 }
 
-func (s *VesselService) Zones(ctx context.Context, query domain.InputVessels) (zones []string, err error) {
+func (s *VesselService) Zones(ctx context.Context, query domain.InputVessels) (zones []domain.ZoneName, err error) {
 	return s.r.Zones(ctx, query)
 }
-func (s *VesselService) Vessels(ctx context.Context, query domain.InputZone) (vesselIds []uint64, err error) {
+func (s *VesselService) Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error) {
 	return s.r.Vessels(ctx, query)
 }
