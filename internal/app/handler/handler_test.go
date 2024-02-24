@@ -65,9 +65,9 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]string{
-					"vessel_id":  strconv.FormatInt(vesselId, 10),
-					"start_time": timeStart.Format(time.RFC3339),
-					"end_time":   timeEnd.Format(time.RFC3339),
+					"vessel_id": strconv.FormatInt(vesselId, 10),
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
 				},
 			},
 			want: want{
@@ -94,9 +94,9 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]string{
-					"vessel_id":  strconv.FormatInt(10000000000, 10),
-					"start_time": timeStart.Format(time.RFC3339),
-					"end_time":   timeEnd.Format(time.RFC3339),
+					"vessel_id": strconv.FormatInt(10000000000, 10),
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
 				},
 			},
 			want: want{
@@ -110,9 +110,9 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]string{
-					"vessel_id":  "string instead number",
-					"start_time": timeStart.Format(time.RFC3339),
-					"end_time":   timeEnd.Format(time.RFC3339),
+					"vessel_id": "string instead number",
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
 				},
 			},
 			want: want{
@@ -196,9 +196,9 @@ func TestVessels(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]string{
-					"zone_name":  zoneName,
-					"start_time": timeStart.Format(time.RFC3339),
-					"end_time":   timeEnd.Format(time.RFC3339),
+					"zone_name": zoneName,
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
 				},
 			},
 			want: want{
@@ -269,9 +269,9 @@ func TestVessels(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]string{
-					"zone_name":  "zone_XXX",
-					"start_time": timeStart.Format(time.RFC3339),
-					"end_time":   timeEnd.Format(time.RFC3339),
+					"zone_name": "zone_XXX",
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
 				},
 			},
 			want: want{
@@ -285,9 +285,9 @@ func TestVessels(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]string{
-					"vessel_id":  "string instead number",
-					"start_time": timeStart.Format(time.RFC3339),
-					"end_time":   timeEnd.Format(time.RFC3339),
+					"vessel_id": "string instead number",
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
 				},
 			},
 			want: want{

@@ -24,7 +24,7 @@ func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []
 	if sqlStr, args, err = sq.Select("name").
 		InnerJoin(constant.DBTracks+" t on st_contains(z.geometry, t.coordinate)").
 		From(constant.DBZones+" z").
-		Where("t.time between $1 and $2 and t.vessel_id = any ($3)", q.StartOrNow(), q.EndOrNow(), pq.Array(q.VesselIDs)).
+		Where("t.time between $1 and $2 and t.vessel_id = any ($3)", q.StartOrLastPeriod(), q.EndOrNow(), pq.Array(q.VesselIDs)).
 		GroupBy("name").
 		ToSql(); err != nil {
 		return
@@ -53,7 +53,7 @@ func (r *ChartsRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs
 	if sqlStr, args, err = sq.Select("vessel_id").
 		InnerJoin(constant.DBZones+" z on st_contains(z.geometry, t.coordinate)").
 		From(constant.DBTracks+" t").
-		Where("time between $1 and $2 and z.name = $3", q.StartOrNow(), q.EndOrNow(), q.ZoneName).
+		Where("time between $1 and $2 and z.name = $3", q.StartOrLastPeriod(), q.EndOrNow(), q.ZoneName).
 		GroupBy("vessel_id").
 		ToSql(); err != nil {
 		return
