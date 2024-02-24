@@ -2,15 +2,15 @@ checklist:
 - [x] migration and import data
 - [x] postgis, docker
 - [x] app, handlers
-  - [x] get vessels for zone GET /vessels?
-  - [x] get zones for vessels GET /zones?
-  - [ ] set monitoring mode POST /monitor
-  - [ ] store track POST /track
+  - [x] get vessels for zone GET /vessels?zone_name=name
+  - [x] get zones for vessels GET /zones?vessel_id=XXvessel_id=XX
+  - [ ] set monitoring mode POST /monitor/vessel_id=XX
+  - [ ] store track POST /track/vessel_id=XX
   - [ ] monitoring GET /monitor  
 
     [//]: # (  - [ ] track log GET /track )
 - [ ] vessel client (simulator)
-   - [ ] repository get tracks by vessel_id 
+   - [ ] repository get tracks by vessel_id for new online data
 - [x] redis, docker
 - [ ] operator set vessel to monitoring (only status: control)
   - [ ] option: "allow set automatically from vessel"
