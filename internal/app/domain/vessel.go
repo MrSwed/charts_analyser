@@ -20,6 +20,8 @@ func (v *VesselID) SetFromStr(s string) (err error) {
 	return
 }
 
+type VesselIDs []VesselID
+
 type VesselName string
 
 func (v *VesselName) String() string {
@@ -57,6 +59,37 @@ func (v *Vessels) FromStrings(s ...string) (err error) {
 			continue
 		}
 		*v = append(*v, iv)
+	}
+	return
+}
+
+func (v *Vessels) StringAr() []interface{} {
+	a := make([]interface{}, 0, len(*v))
+	for _, i := range *v {
+		a = append(a, i.String())
+	}
+	return a
+}
+
+func (v *Vessels) IDsStringAr() []string {
+	a := make([]string, 0, len(*v))
+	for _, i := range *v {
+		a = append(a, i.ID.String())
+	}
+	return a
+}
+
+func (v *Vessels) InterfacesIDs() (ids []interface{}) {
+	ids = make([]interface{}, 0, len(*v))
+	for _, i := range *v {
+		ids = append(ids, i.ID)
+	}
+	return
+}
+func (v *Vessels) IDs() (ids []VesselID) {
+	ids = make([]VesselID, 0, len(*v))
+	for _, i := range *v {
+		ids = append(ids, i.ID)
 	}
 	return
 }
