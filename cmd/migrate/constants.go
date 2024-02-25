@@ -6,6 +6,7 @@ const (
 	EnvNameZonesFile   = "GEO_ZONES"
 	EnvNameChartsPath  = "CHARTS_PATH"
 
-	DBZones  = "zones"
-	DBTracks = "tracks"
+	DBZones   = "zones"
+	DBTracks  = "tracks"
+	DBVessels = "vessels"
 )

@@ -11,10 +11,10 @@ create index zones_geometry_index
 
 create table tracks
 (
- id          SERIAL primary key,
+ id          bigserial  primary key,
  vessel_id   bigint,
- vessel_name varchar(250) not null,
- time        timestamp    not null,
+ vessel_name varchar(250)                           not null,
+ time        timestamp with time zone default now() not null,
  coordinate  geometry(Point, 4326)
 );
 
@@ -26,3 +26,11 @@ create index tracks_vessel_id_index
 
 create index tracks_coordinate_index
  on tracks using gist (coordinate);
+
+
+create table vessels
+(
+ id         bigserial primary key,
+ name       varchar(250),
+ created_at timestamp with time zone default now() not null
+);
