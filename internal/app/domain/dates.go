@@ -10,8 +10,8 @@ type DateInterval struct {
 	Finish time.Time `json:"finish" form:"finish"`
 }
 
-// EndOrNow return now if not set
-func (i *DateInterval) EndOrNow() time.Time {
+// FinishOrNow return now if not set
+func (i *DateInterval) FinishOrNow() time.Time {
 	if i.Finish.IsZero() {
 		return time.Now()
 	}
