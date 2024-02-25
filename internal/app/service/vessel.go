@@ -8,21 +8,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewVesselService(r *repository.Repository) *VesselRepo {
-	return &VesselRepo{r: r}
+func NewVesselService(r *repository.Repository) *VesselService {
+	return &VesselService{r: r}
 }
 
-type VesselRepo struct {
+type VesselService struct {
 	r *repository.Repository
 }
 
-func (s *VesselRepo) GetVessel(ctx context.Context, vesselId domain.VesselID) (vessel domain.Vessel, err error) {
+func (s *VesselService) GetVessels(ctx context.Context, vesselIDs ...domain.VesselID) (vessel domain.Vessels, err error) {
 	if errors.Is(err, errors.Cause(err)) {
 		err = myErr.ErrNotExist
 	}
-	return s.r.GetVessel(ctx, vesselId)
+	return s.r.GetVessels(ctx, vesselIDs...)
 }
 
-func (s *VesselRepo) AddVessel(ctx context.Context, vessel domain.InputVessel) (vesselId domain.VesselID, err error) {
+func (s *VesselService) AddVessel(ctx context.Context, vessel domain.InputVessel) (vesselId domain.VesselID, err error) {
 	return s.r.AddVessel(ctx, vessel)
 }

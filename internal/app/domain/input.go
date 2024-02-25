@@ -2,6 +2,10 @@ package domain
 
 type InputVessels struct {
 	VesselIDs VesselIDs `json:"vessel_id" form:"vessel_id"`
+}
+
+type InputVesselsInterval struct {
+	InputVessels
 	DateInterval
 }
 

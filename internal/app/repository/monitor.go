@@ -4,6 +4,7 @@ import (
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
 	"context"
+	"errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -15,8 +16,12 @@ func NewMonitorRepository(rds *redis.Client) *MonitorCache {
 	return &MonitorCache{rds: rds}
 }
 
-func redisKey(vesselId domain.VesselID) string {
-	return constant.RedisVeselPrefix + vesselId.String()
+func redisKeys(vesselIDs ...domain.VesselID) []string {
+	s := make([]string, 0, len(vesselIDs))
+	for _, v := range vesselIDs {
+		s = append(s, constant.RedisVeselPrefix+v.String())
+	}
+	return s
 }
 
 func (r *MonitorCache) IsMonitored(ctx context.Context, vesselId domain.VesselID) (state bool, err error) {
@@ -24,32 +29,38 @@ func (r *MonitorCache) IsMonitored(ctx context.Context, vesselId domain.VesselID
 	return
 }
 
-func (r *MonitorCache) SetControl(ctx context.Context, vessel domain.Vessel, control bool) (err error) {
+func (r *MonitorCache) SetControl(ctx context.Context, control bool, vesselsItems ...*domain.Vessel) (err error) {
+	if len(vesselsItems) == 0 {
+		return errors.New("no vessels for control")
+	}
+	vessels := domain.Vessels(vesselsItems)
+	veselIDs := vessels.InterfacesIDs()
+	veselNames := vessels.StringAr()
 	if control {
-		if _, err = r.rds.SAdd(ctx, constant.RedisControlIds, vessel.ID.String()).Result(); err != nil {
+		if _, err = r.rds.SAdd(ctx, constant.RedisControlIds, veselIDs...).Result(); err != nil {
 			return
 		}
-		if _, err = r.rds.SAdd(ctx, constant.RedisControlVessels, vessel.String()).Result(); err != nil {
+		if _, err = r.rds.SAdd(ctx, constant.RedisControlVessels, veselNames...).Result(); err != nil {
 			return
 		}
-		//_, err = r.rds.HSet(ctx, redisKey(vessel.ID), domain.VesselState{
+		//_, err = r.rds.HSet(ctx, redisKeys(vessel.ID), domain.VesselState{
 		//	Status:       constant.StatusControl,
 		//}).Result()
 	} else {
-		if _, err = r.rds.SRem(ctx, constant.RedisControlIds, vessel.ID.String()).Result(); err != nil {
+		if _, err = r.rds.SRem(ctx, constant.RedisControlIds, veselIDs...).Result(); err != nil {
 			return
 		}
-		if _, err = r.rds.SRem(ctx, constant.RedisControlVessels, vessel.String()).Result(); err != nil {
+		if _, err = r.rds.SRem(ctx, constant.RedisControlVessels, veselNames...).Result(); err != nil {
 			return
 		}
-		_, err = r.rds.Del(ctx, redisKey(vessel.ID)).Result()
+		_, err = r.rds.Del(ctx, redisKeys(vessels.IDs()...)...).Result()
 	}
 	return
 }
 
 func (r *MonitorCache) GetState(ctx context.Context, vesselId domain.VesselID) (state *domain.VesselState, err error) {
 	m := make(map[string]string)
-	if m, err = r.rds.HGetAll(ctx, redisKey(vesselId)).Result(); err != nil {
+	if m, err = r.rds.HGetAll(ctx, redisKeys(vesselId)[0]).Result(); err != nil {
 		return
 	}
 	err = state.SetFromMap(m)
@@ -57,7 +68,7 @@ func (r *MonitorCache) GetState(ctx context.Context, vesselId domain.VesselID) (
 }
 
 func (r *MonitorCache) UpdateState(ctx context.Context, vesselId domain.VesselID, v domain.VesselState) (err error) {
-	_, err = r.rds.HSet(ctx, redisKey(vesselId), v).Result()
+	_, err = r.rds.HSet(ctx, redisKeys(vesselId)[0], v).Result()
 	return
 }
 

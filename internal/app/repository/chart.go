@@ -16,7 +16,7 @@ func NewChartsRepository(db *sqlx.DB) *ChartRepo {
 	return &ChartRepo{db: db}
 }
 
-func (r *ChartRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []domain.ZoneName, err error) {
+func (r *ChartRepo) Zones(ctx context.Context, q domain.InputVesselsInterval) (zones []domain.ZoneName, err error) {
 	var (
 		sqlStr string
 		args   []interface{}

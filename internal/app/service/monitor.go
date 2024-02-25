@@ -19,7 +19,7 @@ type MonitorService struct {
 func (s *MonitorService) IsMonitored(ctx context.Context, vesselId domain.VesselID) (state bool, err error) {
 	return s.r.Monitor.IsMonitored(ctx, vesselId)
 }
-func (s *MonitorService) SetControl(ctx context.Context, vessel domain.Vessel, status bool) (err error) {
+func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs ...domain.VesselID) (err error) {
 	/* todo: create new one automatically ? * /
 	if vessel.ID == 0 && len([]rune(vessel.Name)) > 0 {
 		vessel.ID, err = s.r.AddVessel(ctx, domain.InputVessel{
@@ -27,15 +27,18 @@ func (s *MonitorService) SetControl(ctx context.Context, vessel domain.Vessel, s
 		})
 	}
 	/**/
-	if vessel.Name == "" {
-		if vessel, err = s.r.Vessels.GetVessel(ctx, vessel.ID); err != nil {
-			if errors.Is(err, errors.Cause(err)) {
-				err = myErr.ErrNotExist
-			}
-			return
+	var vessels domain.Vessels
+	if vessels, err = s.r.Vessels.GetVessels(ctx, vesselIDs...); err != nil {
+		if errors.Is(err, errors.Cause(err)) {
+			err = myErr.ErrNotExist
 		}
+		return
 	}
-	err = s.r.Monitor.SetControl(ctx, vessel, status)
+	if len(vessels) == 0 {
+		err = myErr.ErrNotExist
+		return
+	}
+	err = s.r.Monitor.SetControl(ctx, status, []*domain.Vessel(vessels)...)
 	/* todo: log to postgres * /
 	if err != nil {
 		go func(ctx context.Context, vessel domain.Vessel, status bool) {

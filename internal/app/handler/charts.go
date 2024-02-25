@@ -14,7 +14,7 @@ import (
 // @Summary     список морских карт
 // @Description которые пересекались заданными в запросе судами в заданный временной промежуток.
 // @Accept      json
-// @Param       {object} query     domain.InputVessels false "Входные параметры: идентификаторы судов, стартовая дата, конечная дата."
+// @Param       {object} query     domain.InputVesselsInterval false "Входные параметры: идентификаторы судов, стартовая дата, конечная дата."
 // @Produce     json
 // @Success     200         {object} []string
 // @Failure     400
@@ -24,7 +24,7 @@ import (
 func (h *Handler) Zones() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
-			query domain.InputVessels
+			query domain.InputVesselsInterval
 		)
 		// todo : if post, use json
 		//if body, err := c.GetRawData(); err != nil || len(body) == 0 {

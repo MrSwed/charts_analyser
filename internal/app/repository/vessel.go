@@ -5,6 +5,7 @@ import (
 	"charts_analyser/internal/app/domain"
 	"context"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type VesselRepo struct {
@@ -15,19 +16,19 @@ func NewVesselRepository(db *sqlx.DB) *VesselRepo {
 	return &VesselRepo{db: db}
 }
 
-func (r *VesselRepo) GetVessel(ctx context.Context, vesselId domain.VesselID) (vessel domain.Vessel, err error) {
+func (r *VesselRepo) GetVessels(ctx context.Context, vesselIDs ...domain.VesselID) (vessels domain.Vessels, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
 	)
 	if sqlStr, args, err = sq.Select("id", "name").
 		From(constant.DBVessels).
-		Where("id = $1", vesselId).
+		Where("id = any($1)", pq.Array(vesselIDs)).
 		ToSql(); err != nil {
 		return
 	}
 
-	err = r.db.GetContext(ctx, &vessel, sqlStr, args...)
+	err = r.db.SelectContext(ctx, &vessels, sqlStr, args...)
 	return
 }
 

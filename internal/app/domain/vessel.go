@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -20,7 +21,22 @@ func (v *VesselID) SetFromStr(s string) (err error) {
 	return
 }
 
+func (v *VesselID) MarshalBinary() ([]byte, error) {
+	return json.Marshal(v)
+}
+
 type VesselIDs []VesselID
+
+//func (v *VesselIDs) IDs() (ids []VesselID) {
+//	ids = make([]VesselID, 0, len(*v))
+//	for _, i := range *v {
+//		if i.ID == 0 {
+//			continue
+//		}
+//		ids = append(ids, i.ID)
+//	}
+//	return
+//}
 
 type VesselName string
 
@@ -39,7 +55,7 @@ func (v *Vessel) String() string {
 
 func (v *Vessel) FromString(s string) (err error) {
 	sa := strings.SplitN(s, ":", 2)
-	v.Name = VesselName(s[1])
+	v.Name = VesselName(sa[1])
 	err = v.ID.SetFromStr(sa[0])
 	return
 }
@@ -74,6 +90,9 @@ func (v *Vessels) StringAr() []interface{} {
 func (v *Vessels) IDsStringAr() []string {
 	a := make([]string, 0, len(*v))
 	for _, i := range *v {
+		if i.ID == 0 {
+			continue
+		}
 		a = append(a, i.ID.String())
 	}
 	return a
@@ -82,13 +101,20 @@ func (v *Vessels) IDsStringAr() []string {
 func (v *Vessels) InterfacesIDs() (ids []interface{}) {
 	ids = make([]interface{}, 0, len(*v))
 	for _, i := range *v {
-		ids = append(ids, i.ID)
+		if i.ID == 0 {
+			continue
+		}
+		ids = append(ids, int64(i.ID))
 	}
 	return
 }
+
 func (v *Vessels) IDs() (ids []VesselID) {
 	ids = make([]VesselID, 0, len(*v))
 	for _, i := range *v {
+		if i.ID == 0 {
+			continue
+		}
 		ids = append(ids, i.ID)
 	}
 	return

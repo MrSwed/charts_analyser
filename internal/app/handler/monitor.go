@@ -8,6 +8,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 )
 
@@ -44,40 +45,47 @@ func (h *Handler) MonitoredList() gin.HandlerFunc {
 // @Description
 // на мониторинг (снять с мониторинга)
 // @Accept      json
+// @Param       vessel_id     query  {array}  domain.VesselID true "ID Судна"
+// @Param       RequestBody   body   []domain.VesselID true "список ID Суден"
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
 // @Failure     403          :todo
-// @Router      /monitor/:id [post]
+// @Router      /monitor/ [post]
 func (h *Handler) SetControl() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
-			vessel = domain.Vessel{}
-			id     = c.Param("id")
-			query  domain.InputVessel
+			VesselIDs []domain.VesselID
 		)
-		err := vessel.ID.SetFromStr(id)
-		if err != nil {
-			h.log.Error("SetControl id error", zap.Error(err), zap.Any("id", id))
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-
-		if err = c.BindQuery(&query); err != nil {
+		err := c.ShouldBindJSON(&VesselIDs)
+		if err != nil && !errors.Is(err, io.EOF) {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		if query.VesselName != "" {
-			vessel.Name = query.VesselName
+
+		if len(VesselIDs) == 0 {
+			var query domain.InputVessels
+			if err = c.BindQuery(&query); err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				h.log.Error("SetControl,query", zap.Error(err))
+				return
+			}
+			VesselIDs = query.VesselIDs
 		}
-		err = h.s.SetControl(c, vessel, true)
+
+		if len(VesselIDs) == 0 {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		err = h.s.SetControl(c, true, VesselIDs...)
 		if err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
 			}
 			c.AbortWithStatus(http.StatusInternalServerError)
-			h.log.Error("SetControl", zap.Error(err), zap.Any("id", id))
+			h.log.Error("SetControl", zap.Error(err), zap.Any("ids", VesselIDs))
 			return
 		}
 		status := http.StatusOK
@@ -99,18 +107,37 @@ func (h *Handler) SetControl() gin.HandlerFunc {
 func (h *Handler) DelControl() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
-			vessel = domain.Vessel{}
-			id     = c.Param("id")
+			VesselIDs []domain.VesselID
 		)
-		err := vessel.ID.SetFromStr(id)
-		if err != nil {
-			h.log.Error("DelControl id error", zap.Error(err), zap.Any("id", id))
-			c.AbortWithStatus(http.StatusInternalServerError)
+		err := c.ShouldBindJSON(&VesselIDs)
+		if err != nil && !errors.Is(err, io.EOF) {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
 		}
-		err = h.s.SetControl(c, vessel, false)
+
+		if len(VesselIDs) == 0 {
+			var query domain.InputVessels
+			if err = c.BindQuery(&query); err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				h.log.Error("SetControl,query", zap.Error(err))
+				return
+			}
+			VesselIDs = query.VesselIDs
+		}
+
+		if len(VesselIDs) == 0 {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		err = h.s.SetControl(c, false, VesselIDs...)
 		if err != nil {
+			if errors.Is(err, myErr.ErrNotExist) {
+				c.AbortWithStatus(http.StatusNotFound)
+				return
+			}
 			c.AbortWithStatus(http.StatusInternalServerError)
-			h.log.Error("DelControl", zap.Error(err), zap.Any("id", id))
+			h.log.Error("SetControl", zap.Error(err), zap.Any("ids", VesselIDs))
+			return
 		}
 		status := http.StatusOK
 		c.String(status, "ok")

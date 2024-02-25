@@ -37,8 +37,8 @@ func (h *Handler) Handler() http.Handler {
 
 	monitor := api.Group(constant.RouteMonitor)
 	monitor.GET("", h.MonitoredList())
-	monitor.POST(constant.RouteID, h.SetControl())
-	monitor.DELETE(constant.RouteID, h.DelControl())
+	monitor.POST("", h.SetControl())
+	monitor.DELETE("", h.DelControl())
 
 	return h.r
 }
