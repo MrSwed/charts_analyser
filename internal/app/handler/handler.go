@@ -36,6 +36,7 @@ func (h *Handler) Handler() http.Handler {
 	api.GET(constant.RouteVessels, h.Vessels())
 
 	monitor := api.Group(constant.RouteMonitor)
+	monitor.GET("/state", h.VesselState())
 	monitor.GET("", h.MonitoredList())
 	monitor.POST("", h.SetControl())
 	monitor.DELETE("", h.DelControl())

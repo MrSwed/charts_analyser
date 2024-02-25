@@ -4,11 +4,9 @@ checklist:
 - [x] app, handlers
   - [x] get vessels for zone GET /vessels?zone_name=name
   - [x] get zones for vessels GET /zones?vessel_id=XXvessel_id=XX
-  - [x] set monitoring mode POST /monitor/:id
-
-      [//]: # (  - [ ] set monitoring mode bath POST /monitor/)
+  - [x] set monitoring mode POST /monitor/?vessel_id=XX
   - [x] monitoring GET /monitor - list of monitored vessels  
-  - [ ] get monitored vessel info GET /monitor/:id
+  - [x] get monitored vessel info GET /monitor/state?vessel_id=XX
   - [ ] store track POST /track/vessel_id=XX && update monitored
 
       [//]: # (  - [ ] track log GET /track )
