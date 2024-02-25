@@ -29,5 +29,6 @@ const (
 	RedisVeselPrefix    = "vessel:"
 	RedisControlIds     = "_control:ids"
 	RedisControlVessels = "_control:vessels"
-	StatusControl       = "control"
 )
+
+var GeoAllowedRange = [4]float64{-180, -75, 180, 75}

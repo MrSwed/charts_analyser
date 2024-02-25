@@ -21,7 +21,7 @@ func (v *VesselID) SetFromStr(s string) (err error) {
 	return
 }
 
-func (v *VesselID) MarshalBinary() ([]byte, error) {
+func (v VesselID) MarshalBinary() ([]byte, error) {
 	return json.Marshal(v)
 }
 
@@ -45,8 +45,12 @@ func (v *VesselName) String() string {
 }
 
 type Vessel struct {
-	ID   VesselID
-	Name VesselName
+	ID   VesselID   `json:"id" db:"vessel_id"`
+	Name VesselName `json:"name" db:"vessel_name"`
+}
+
+func (v Vessel) MarshalBinary() ([]byte, error) {
+	return json.Marshal(v)
 }
 
 func (v *Vessel) String() string {

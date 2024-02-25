@@ -5,6 +5,7 @@ import (
 	"charts_analyser/internal/app/domain"
 	"context"
 	"errors"
+	"github.com/goccy/go-json"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -59,16 +60,24 @@ func (r *MonitorCache) SetControl(ctx context.Context, control bool, vesselsItem
 }
 
 func (r *MonitorCache) GetState(ctx context.Context, vesselId domain.VesselID) (state *domain.VesselState, err error) {
-	m := make(map[string]string)
-	if m, err = r.rds.HGetAll(ctx, redisKeys(vesselId)[0]).Result(); err != nil {
+	var m string
+	if m, err = r.rds.Get(ctx, redisKeys(vesselId)[0]).Result(); err != nil {
 		return
 	}
-	err = state.SetFromMap(m)
+	if len(m) > 0 {
+		state = new(domain.VesselState)
+		//err = state.SetFromMap(m)
+		err = json.Unmarshal([]byte(m), &state)
+	}
 	return
 }
 
-func (r *MonitorCache) UpdateState(ctx context.Context, vesselId domain.VesselID, v domain.VesselState) (err error) {
-	_, err = r.rds.HSet(ctx, redisKeys(vesselId)[0], v).Result()
+func (r *MonitorCache) UpdateState(ctx context.Context, vesselId domain.VesselID, v *domain.VesselState) (err error) {
+	if v == nil {
+		err = errors.New("updateState: input data nil")
+		return
+	}
+	_, err = r.rds.Set(ctx, redisKeys(vesselId)[0], v, 0).Result()
 	return
 }
 

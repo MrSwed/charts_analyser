@@ -41,5 +41,8 @@ func (h *Handler) Handler() http.Handler {
 	monitor.POST("", h.SetControl())
 	monitor.DELETE("", h.DelControl())
 
+	track := api.Group(constant.RouteTrack)
+	track.POST("/:id", h.Track())
+
 	return h.r
 }

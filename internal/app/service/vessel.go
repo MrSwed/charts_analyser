@@ -5,6 +5,7 @@ import (
 	myErr "charts_analyser/internal/app/error"
 	"charts_analyser/internal/app/repository"
 	"context"
+	"database/sql"
 	"github.com/pkg/errors"
 )
 
@@ -17,10 +18,11 @@ type VesselService struct {
 }
 
 func (s *VesselService) GetVessels(ctx context.Context, vesselIDs ...domain.VesselID) (vessel domain.Vessels, err error) {
-	if errors.Is(err, errors.Cause(err)) {
+	vessel, err = s.r.GetVessels(ctx, vesselIDs...)
+	if errors.Is(err, sql.ErrNoRows) {
 		err = myErr.ErrNotExist
 	}
-	return s.r.GetVessels(ctx, vesselIDs...)
+	return
 }
 
 func (s *VesselService) AddVessel(ctx context.Context, vessel domain.InputVessel) (vesselId domain.VesselID, err error) {

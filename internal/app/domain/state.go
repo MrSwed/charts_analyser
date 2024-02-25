@@ -8,29 +8,37 @@ import (
 	"time"
 )
 
-type VesselState struct {
+type LocationPoint struct {
+	Location Point `json:"location" db:"location"`
+}
+
+type Track struct {
 	Timestamp time.Time `json:"timestamp"`
-	//Status       string        `json:"status"`
-	Location     Point        `json:"location" db:"ST_AsGeoJSON(coordinate)::json->>'coordinates' as location"`
-	Vessel       Vessel       `json:"vessel"`
-	DateInterval DateInterval `json:"dateInterval"`
+	LocationPoint
+	Vessel
 }
 
-/*
-func (v VesselState) Map() (map[string]interface{}, error) {
-	m := make(map[string]interface{})
-	b, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(b, m)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
+type CurrentZone struct {
+	Zones  []ZoneName `json:"zones" db:"zones"`
+	TimeIn time.Time  `json:"timeIn" db:"time_in"`
 }
-*/
 
+func (v CurrentZone) MarshalBinary() ([]byte, error) {
+	return json.Marshal(v)
+}
+
+type VesselState struct {
+	Timestamp    time.Time `json:"timestamp"`
+	Location     Point     `json:"location"`
+	Vessel       Vessel    `json:"vessel"`
+	CurrentZone  `json:"currentZone"`
+	ZoneDuration string `json:"zoneDuration"`
+}
+
+func (v VesselState) MarshalBinary() ([]byte, error) {
+	v.ZoneTimeSet()
+	return json.Marshal(v)
+}
 func (v VesselState) Value() (driver.Value, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
@@ -50,6 +58,7 @@ func (v *VesselState) Scan(src interface{}) error {
 	if err != nil {
 		return err
 	}
+	v.ZoneTimeSet()
 	return nil
 }
 
@@ -63,13 +72,19 @@ func (v *VesselState) SetFromMap(m map[string]string) (err error) {
 	return
 }
 
+func (v *VesselState) ZoneTimeSet() {
+
+	v.ZoneDuration = v.Timestamp.Sub(v.CurrentZone.TimeIn).String()
+
+}
+
 // Point 	(0 - lon, 1 - ltd)
 type Point [2]float64
 
 func (v Point) Value() (driver.Value, error) {
 	strLon := strconv.FormatFloat(v[0], 'g', -1, 64)
 	strLtd := strconv.FormatFloat(v[1], 'g', -1, 64)
-	b := "POINT(" + strLon + " " + strLtd + ")"
+	b := "SRID=4326;POINT(" + strLon + " " + strLtd + ")"
 	return b, nil
 }
 
@@ -85,4 +100,8 @@ func (v *Point) Scan(src interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (v Point) MarshalBinary() ([]byte, error) {
+	return json.Marshal(v)
 }

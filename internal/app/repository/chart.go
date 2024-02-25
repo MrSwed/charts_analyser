@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"time"
 )
 
 type ChartRepo struct {
@@ -22,7 +23,7 @@ func (r *ChartRepo) Zones(ctx context.Context, q domain.InputVesselsInterval) (z
 		args   []interface{}
 	)
 	if sqlStr, args, err = sq.Select("name").
-		InnerJoin(constant.DBTracks+" t on st_contains(z.geometry, t.coordinate)").
+		InnerJoin(constant.DBTracks+" t on st_contains(z.geometry, t.location)").
 		From(constant.DBZones+" z").
 		Where("t.time between $1 and $2 and t.vessel_id = any ($3)", q.StartOrLastPeriod(), q.FinishOrNow(), pq.Array(q.VesselIDs)).
 		GroupBy("name").
@@ -36,11 +37,27 @@ func (r *ChartRepo) Zones(ctx context.Context, q domain.InputVesselsInterval) (z
 	}
 	/*
 		 `select name from zones z
-			inner join tracks t on st_contains(z.geometry, t.coordinate)
+			inner join tracks t on st_contains(z.geometry, t.location)
 			where t.time between '2017-01-08 00:00:00' and '2020-10-09 00:00:00'
 			and t.vessel_id = 9110913
 			group by z.name`
 	*/
+	return
+}
+
+func (r *ChartRepo) ZonesByLocation(ctx context.Context, location domain.Point) (zones []domain.ZoneName, err error) {
+	var (
+		sqlStr string
+		args   []interface{}
+	)
+	if sqlStr, args, err = sq.Select("name").
+		From(constant.DBZones+" z").
+		Where("st_contains(z.geometry, $1)", location).
+		ToSql(); err != nil {
+		return
+	}
+
+	err = r.db.SelectContext(ctx, &zones, sqlStr, args...)
 	return
 }
 
@@ -51,7 +68,7 @@ func (r *ChartRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs 
 	)
 
 	if sqlStr, args, err = sq.Select("vessel_id").
-		InnerJoin(constant.DBZones+" z on st_contains(z.geometry, t.coordinate)").
+		InnerJoin(constant.DBZones+" z on st_contains(z.geometry, t.location)").
 		From(constant.DBTracks+" t").
 		Where("time between $1 and $2 and z.name = $3", q.StartOrLastPeriod(), q.FinishOrNow(), q.ZoneName).
 		GroupBy("vessel_id").
@@ -65,10 +82,28 @@ func (r *ChartRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs 
 	}
 	/*		`select vessel_id
 	from tracks t
-	     inner join zones z on st_contains(z.geometry, t.coordinate)
+	     inner join zones z on st_contains(z.geometry, t.location)
 	where time between '2017-01-08 00:00:00' and '2020-10-09 00:00:00'
 	and z.name = 'zone_205'
 	group by vessel_id`*/
 
+	return
+}
+
+func (r *ChartRepo) Track(ctx context.Context, track *domain.Track) (err error) {
+	var (
+		sqlStr string
+		args   []interface{}
+	)
+	if track.Timestamp.IsZero() {
+		track.Timestamp = time.Now()
+	}
+	if sqlStr, args, err = sq.Insert(constant.DBTracks).
+		Columns("vessel_id", "vessel_name", "time", "location").
+		Values(track.Vessel.ID, track.Vessel.Name, track.Timestamp, track.Location).
+		ToSql(); err != nil {
+		return
+	}
+	_, err = r.db.ExecContext(ctx, sqlStr, args...)
 	return
 }

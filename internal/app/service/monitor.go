@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/redis/go-redis/v9"
 )
 
 func NewMonitorService(r *repository.Repository) *MonitorService {
@@ -58,7 +59,7 @@ func (s *MonitorService) GetStates(ctx context.Context, vesselIds ...domain.Vess
 		}
 		state, er := s.r.Monitor.GetState(ctx, vesselId)
 		if er != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+			if errors.Is(err, redis.Nil) {
 				er = myErr.ErrNotExist
 			}
 			err = errors.Join(err, er)
@@ -72,25 +73,6 @@ func (s *MonitorService) GetStates(ctx context.Context, vesselIds ...domain.Vess
 	return
 }
 
-func (s *MonitorService) UpdateState(ctx context.Context, vesselId domain.VesselID, state domain.VesselState) (err error) {
-	var control bool
-	if control, err = s.IsMonitored(ctx, vesselId); err != nil {
-		return
-	}
-	if !control {
-		return myErr.ErrNotControlled
-	}
-	err = s.r.Monitor.UpdateState(ctx, vesselId, state)
-	/* todo: * /
-	if err != nil {
-		go func(ctx context.Context, vesselId domain.VesselID, state domain.VesselState) {
-			err := s.r.TrackAdd(ctx, vesselId, state)
-
-		}(ctx, vesselId, state)
-	}
-	/**/
-	return
-}
 func (s *MonitorService) MonitoredVessels(ctx context.Context) (vessels domain.Vessels, err error) {
 	return s.r.Monitor.MonitoredVessels(ctx)
 }

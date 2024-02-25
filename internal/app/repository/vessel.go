@@ -21,7 +21,7 @@ func (r *VesselRepo) GetVessels(ctx context.Context, vesselIDs ...domain.VesselI
 		sqlStr string
 		args   []interface{}
 	)
-	if sqlStr, args, err = sq.Select("id", "name").
+	if sqlStr, args, err = sq.Select("id as vessel_id", "name as vessel_name").
 		From(constant.DBVessels).
 		Where("id = any($1)", pq.Array(vesselIDs)).
 		ToSql(); err != nil {

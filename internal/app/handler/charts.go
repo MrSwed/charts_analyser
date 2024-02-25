@@ -3,9 +3,12 @@ package handler
 import (
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
+	myErr "charts_analyser/internal/app/error"
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 )
 
@@ -90,5 +93,54 @@ func (h *Handler) Vessels() gin.HandlerFunc {
 		}
 		status := http.StatusOK
 		c.JSON(status, result)
+	}
+}
+
+// Track
+// @Tags        Track
+// @Summary     Запись трека судна
+// @Description
+// на мониторинг (снять с мониторинга)
+// @Accept      json
+// @Param       vessel_id     query  {array}  domain.VesselID true "ID Судна"
+// @Param       RequestBody   body   []domain.VesselID true "список ID Суден"
+// @Produce     json
+// @Success     200         {string} string "Ok"
+// @Failure     400
+// @Failure     500
+// @Failure     403          :todo
+// @Router      /track/:id [post]
+func (h *Handler) Track() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var (
+			location domain.Point
+			id       domain.VesselID
+		)
+		err := id.SetFromStr(c.Param("id"))
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		err = c.ShouldBindJSON(&location)
+		if err != nil && !errors.Is(err, io.EOF) {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		if err = h.s.Track(c, id, location); err != nil {
+			if errors.Is(err, myErr.ErrNotExist) {
+				c.AbortWithStatus(http.StatusNotFound)
+				return
+			}
+			if errors.Is(err, myErr.ErrLocationOutOfRange) {
+				c.String(http.StatusNotFound, myErr.ErrLocationOutOfRange.Error())
+				return
+			}
+			c.AbortWithStatus(http.StatusInternalServerError)
+			h.log.Error("SetControl", zap.Error(err), zap.Any("id", id), zap.Any("location", location))
+			return
+		}
+		status := http.StatusOK
+		c.String(status, "ok")
 	}
 }

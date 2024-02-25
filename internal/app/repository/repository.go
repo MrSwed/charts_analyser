@@ -27,6 +27,8 @@ func NewRepository(db *sqlx.DB, rds *redis.Client) *Repository {
 type Chart interface {
 	Zones(ctx context.Context, query domain.InputVesselsInterval) (zones []domain.ZoneName, err error)
 	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
+	ZonesByLocation(ctx context.Context, location domain.Point) (zones []domain.ZoneName, err error)
+	Track(ctx context.Context, track *domain.Track) (err error)
 }
 
 type Vessels interface {
@@ -38,6 +40,6 @@ type Monitor interface {
 	IsMonitored(ctx context.Context, vesselId domain.VesselID) (bool, error)
 	SetControl(ctx context.Context, status bool, vessels ...*domain.Vessel) error
 	GetState(ctx context.Context, vesselId domain.VesselID) (*domain.VesselState, error)
-	UpdateState(ctx context.Context, vesselId domain.VesselID, v domain.VesselState) error
+	UpdateState(ctx context.Context, vesselId domain.VesselID, v *domain.VesselState) error
 	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
 }

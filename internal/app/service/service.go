@@ -23,6 +23,8 @@ func NewService(r *repository.Repository) *Service {
 type Chart interface {
 	Zones(ctx context.Context, query domain.InputVesselsInterval) (zones []domain.ZoneName, err error)
 	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
+	Track(ctx context.Context, vesselID domain.VesselID, query domain.Point) (err error)
+	MaybeUpdateState(ctx context.Context, vesselId domain.VesselID, track *domain.Track) error
 }
 
 type Vessel interface {
@@ -34,6 +36,5 @@ type Monitor interface {
 	IsMonitored(ctx context.Context, vesselId domain.VesselID) (bool, error)
 	SetControl(ctx context.Context, status bool, vessels ...domain.VesselID) error
 	GetStates(ctx context.Context, vesselId ...domain.VesselID) ([]*domain.VesselState, error)
-	UpdateState(ctx context.Context, vesselId domain.VesselID, v domain.VesselState) error
 	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
 }
