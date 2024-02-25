@@ -11,6 +11,7 @@ import (
 	"errors"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -49,8 +50,18 @@ func runServer(ctx context.Context) {
 	if db, err = sqlx.Connect("pgx", conf.DatabaseDSN); err != nil {
 		logger.Fatal("cannot connect db", zap.Error(err))
 	}
-
-	r := repository.NewRepository(db)
+	redisCli := func() *redis.Client {
+		client := redis.NewClient(&redis.Options{
+			Addr:     conf.RedisAddress,
+			Password: conf.RedisPass,
+			DB:       0,
+		})
+		if _, err = client.Ping(ctx).Result(); err != nil {
+			logger.Fatal("cannot connect redis", zap.Error(err))
+		}
+		return client
+	}()
+	r := repository.NewRepository(db, redisCli)
 	s := service.NewService(r)
 	h := handler.NewHandler(s, logger)
 
@@ -61,6 +72,13 @@ func runServer(ctx context.Context) {
 	graceShutdown.Add("DB Close", func(ctx context.Context) (err error) {
 		if err = db.Close(); err == nil {
 			logger.Info("Db Closed")
+		}
+		return
+	})
+
+	graceShutdown.Add("Redis Close", func(ctx context.Context) (err error) {
+		if err = redisCli.Close(); err == nil {
+			logger.Info("Redis Closed")
 		}
 		return
 	})

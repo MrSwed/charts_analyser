@@ -8,15 +8,15 @@ import (
 	"github.com/lib/pq"
 )
 
-type ChartsRepo struct {
+type ChartRepo struct {
 	db *sqlx.DB
 }
 
-func NewChartsRepository(db *sqlx.DB) *ChartsRepo {
-	return &ChartsRepo{db: db}
+func NewChartsRepository(db *sqlx.DB) *ChartRepo {
+	return &ChartRepo{db: db}
 }
 
-func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []domain.ZoneName, err error) {
+func (r *ChartRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []domain.ZoneName, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
@@ -44,7 +44,7 @@ func (r *ChartsRepo) Zones(ctx context.Context, q domain.InputVessels) (zones []
 	return
 }
 
-func (r *ChartsRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs []domain.VesselID, err error) {
+func (r *ChartRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs []domain.VesselID, err error) {
 	var (
 		sqlStr string
 		args   []interface{}

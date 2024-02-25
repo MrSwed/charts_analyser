@@ -8,7 +8,10 @@ import (
 	"charts_analyser/internal/app/domain"
 	"charts_analyser/internal/app/repository"
 	"charts_analyser/internal/app/service"
+	"context"
 	"encoding/json"
+	"github.com/redis/go-redis/v9"
+	"log"
 
 	"io"
 	"net/http"
@@ -25,15 +28,29 @@ import (
 )
 
 var (
-	conf = config.NewConfig().WithEnv()
+	conf     = config.NewConfig().WithEnv()
+	redisCli = func() *redis.Client {
+		client := redis.NewClient(&redis.Options{
+			Addr:     conf.RedisAddress,
+			Password: conf.RedisPass,
+			DB:       0,
+		})
+		if _, err := client.Ping(context.TODO()).Result(); err != nil {
+			log.Fatal("cannot connect redis", err)
+		}
+		return client
+	}()
+	db = func() *sqlx.DB {
+		db, err := sqlx.Connect("postgres", conf.DatabaseDSN)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return db
+	}()
 )
 
 func TestZones(t *testing.T) {
-	db, err := sqlx.Connect("postgres", conf.DatabaseDSN)
-	if err != nil {
-		require.NoError(t, err)
-	}
-	repo := repository.NewRepository(db)
+	repo := repository.NewRepository(db, redisCli)
 	s := service.NewService(repo)
 	logger, _ := zap.NewDevelopment()
 	h := NewHandler(s, logger).Handler()
@@ -151,11 +168,7 @@ func TestZones(t *testing.T) {
 }
 
 func TestVessels(t *testing.T) {
-	db, err := sqlx.Connect("postgres", conf.DatabaseDSN)
-	if err != nil {
-		require.NoError(t, err)
-	}
-	repo := repository.NewRepository(db)
+	repo := repository.NewRepository(db, redisCli)
 	s := service.NewService(repo)
 	logger, _ := zap.NewDevelopment()
 	h := NewHandler(s, logger).Handler()

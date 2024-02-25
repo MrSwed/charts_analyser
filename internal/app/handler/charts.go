@@ -10,9 +10,9 @@ import (
 )
 
 // Zones
-// @Tags        Zones
-// @Summary
-// @Description  список морских карт, которые пересекались заданными в запросе судами в заданный временной промежуток.
+// @Tags        Chart
+// @Summary     список морских карт
+// @Description которые пересекались заданными в запросе судами в заданный временной промежуток.
 // @Accept      json
 // @Param       {object} query     domain.InputVessels false "Входные параметры: идентификаторы судов, стартовая дата, конечная дата."
 // @Produce     json
@@ -41,7 +41,7 @@ func (h *Handler) Zones() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
 		defer cancel()
 
-		result, err := h.s.Zones(ctx, query)
+		result, err := h.s.Chart.Zones(ctx, query)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			h.log.Error("Error get zones", zap.Error(err))
@@ -52,9 +52,9 @@ func (h *Handler) Zones() gin.HandlerFunc {
 }
 
 // Vessels
-// @Tags        Vessels
-// @Summary
-// @Description  список судов, которые пересекали заданные в запросе морские карты в заданный временной промежуток.
+// @Tags        Chart
+// @Summary     список судов
+// @Description которые пересекали заданные в запросе морские карты в заданный временной промежуток.
 // @Accept      json
 // @Param       {object} query     domain.InputZone false "Входные параметры: идентификатор карт, стартовая дата, конечная дата."
 // @Produce     json
@@ -83,7 +83,7 @@ func (h *Handler) Vessels() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
 		defer cancel()
 
-		result, err := h.s.Vessels(ctx, query)
+		result, err := h.s.Chart.Vessels(ctx, query)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			h.log.Error("Error vessel zones", zap.Error(err))

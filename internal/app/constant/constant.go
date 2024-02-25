@@ -10,13 +10,24 @@ const (
 
 	EnvNameServerAddress = "ADDRESS"
 	EnvNameDBDSN         = "DATABASE_DSN"
+	EnvNameRedisAddress  = "REDIS_ADDRESS"
+	EnvNameRedisPass     = "REDIS_PASS"
 
-	DBZones  = "zones"
-	DBTracks = "tracks"
+	DBZones   = "zones"
+	DBTracks  = "tracks"
+	DBVessels = "vessels"
 
+	RouteID      = "/:id"
 	RouteApi     = "/api"
 	RouteVessels = "/vessels"
 	RouteZones   = "/zones"
+	RouteMonitor = "/monitor"
+	RouteTrack   = "/track"
 
 	MonitorLastPeriod = 30 * time.Second
+
+	RedisVeselPrefix    = "vessel:"
+	RedisControlIds     = "_control:ids"
+	RedisControlVessels = "_control:vessels"
+	StatusControl       = "control"
 )

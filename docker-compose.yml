@@ -17,7 +17,7 @@ services:
       - "6379:6379"
     volumes:
       - ./data/_redis:/root/redis
-      - /config/redis.conf:/usr/local/etc/redis/redis.conf
+      - /etc/redis/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
       - REDIS_PASSWORD=my-password
       - REDIS_PORT=6379

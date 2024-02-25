@@ -7,31 +7,33 @@ import (
 )
 
 type Service struct {
+	Chart
+	Monitor
 	Vessel
 }
 
 func NewService(r *repository.Repository) *Service {
 	return &Service{
-		Vessel: NewChartsService(r),
+		Chart:   NewChartService(r),
+		Monitor: NewMonitorService(r),
+		Vessel:  NewVesselService(r),
 	}
 }
 
-type Vessel interface {
+type Chart interface {
 	Zones(ctx context.Context, query domain.InputVessels) (zones []domain.ZoneName, err error)
 	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
 }
 
-func NewChartsService(r *repository.Repository) *VesselService {
-	return &VesselService{r: r}
+type Vessel interface {
+	GetVessel(ctx context.Context, vesselId domain.VesselID) (domain.Vessel, error)
+	AddVessel(ctx context.Context, vessel domain.InputVessel) (domain.VesselID, error)
 }
 
-type VesselService struct {
-	r *repository.Repository
-}
-
-func (s *VesselService) Zones(ctx context.Context, query domain.InputVessels) (zones []domain.ZoneName, err error) {
-	return s.r.Zones(ctx, query)
-}
-func (s *VesselService) Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error) {
-	return s.r.Vessels(ctx, query)
+type Monitor interface {
+	IsMonitored(ctx context.Context, vesselId domain.VesselID) (bool, error)
+	SetControl(ctx context.Context, vessel domain.Vessel, status bool) error
+	GetState(ctx context.Context, vesselId domain.VesselID) (*domain.VesselState, error)
+	UpdateState(ctx context.Context, vesselId domain.VesselID, v domain.VesselState) error
+	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
 }

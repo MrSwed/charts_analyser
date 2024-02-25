@@ -25,3 +25,11 @@ func (i *DateInterval) StartOrLastPeriod() time.Time {
 	}
 	return i.Start
 }
+
+func (i *DateInterval) Period() time.Duration {
+	return i.Finish.Sub(i.Start)
+}
+
+func (i *DateInterval) PeriodAuto() time.Duration {
+	return i.FinishOrNow().Sub(i.StartOrLastPeriod())
+}
