@@ -13,7 +13,7 @@ type ChartRepo struct {
 	db *sqlx.DB
 }
 
-func NewChartsRepository(db *sqlx.DB) *ChartRepo {
+func NewChartRepository(db *sqlx.DB) *ChartRepo {
 	return &ChartRepo{db: db}
 }
 

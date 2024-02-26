@@ -18,7 +18,7 @@ type Repository struct {
 
 func NewRepository(db *sqlx.DB, rds *redis.Client) *Repository {
 	return &Repository{
-		Chart:   NewChartsRepository(db),
+		Chart:   NewChartRepository(db),
 		Monitor: NewMonitorRepository(rds),
 		Vessels: NewVesselRepository(db),
 	}
