@@ -13,8 +13,8 @@ create table tracks
 (
  id          bigserial primary key,
  vessel_id   bigint,
- vessel_name varchar(250)                           not null,
- time        timestamp with time zone default now() not null,
+ vessel_name varchar(250)              not null,
+ time        timestamptz default now() not null,
  location    geometry(Point, 4326)
 );
 
@@ -32,5 +32,5 @@ create table vessels
 (
  id         bigserial primary key,
  name       varchar(250),
- created_at timestamp with time zone default now() not null
+ created_at timestamptz default now() not null
 );

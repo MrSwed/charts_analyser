@@ -46,7 +46,7 @@ func main() {
 	isNewDB = versions[0] == 0
 
 	if !isNewDB {
-		log.Println("not new db, no data import. Done.")
+		log.Println("not the first installation, do not import anything. Done.")
 		return
 	}
 	ctx := context.Background()
