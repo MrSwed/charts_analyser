@@ -7,10 +7,12 @@ import (
 	"errors"
 	"github.com/goccy/go-json"
 	"github.com/redis/go-redis/v9"
+	"sync"
 )
 
 type MonitorCache struct {
 	rds *redis.Client
+	mu  sync.Mutex
 }
 
 func NewMonitorRepository(rds *redis.Client) *MonitorCache {
@@ -34,6 +36,8 @@ func (r *MonitorCache) SetControl(ctx context.Context, control bool, vesselsItem
 	if len(vesselsItems) == 0 {
 		return errors.New("no vessels for control")
 	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	vessels := domain.Vessels(vesselsItems)
 	veselIDs := vessels.InterfacesIDs()
 	veselNames := vessels.StringAr()
@@ -44,9 +48,6 @@ func (r *MonitorCache) SetControl(ctx context.Context, control bool, vesselsItem
 		if _, err = r.rds.SAdd(ctx, constant.RedisControlVessels, veselNames...).Result(); err != nil {
 			return
 		}
-		//_, err = r.rds.HSet(ctx, redisKeys(vessel.ID), domain.VesselState{
-		//	Status:       constant.StatusControl,
-		//}).Result()
 	} else {
 		if _, err = r.rds.SRem(ctx, constant.RedisControlIds, veselIDs...).Result(); err != nil {
 			return
@@ -54,7 +55,6 @@ func (r *MonitorCache) SetControl(ctx context.Context, control bool, vesselsItem
 		if _, err = r.rds.SRem(ctx, constant.RedisControlVessels, veselNames...).Result(); err != nil {
 			return
 		}
-		_, err = r.rds.Del(ctx, redisKeys(vessels.IDs()...)...).Result()
 	}
 	return
 }
@@ -66,7 +66,6 @@ func (r *MonitorCache) GetState(ctx context.Context, vesselId domain.VesselID) (
 	}
 	if len(m) > 0 {
 		state = new(domain.VesselState)
-		//err = state.SetFromMap(m)
 		err = json.Unmarshal([]byte(m), &state)
 	}
 	return
@@ -77,6 +76,8 @@ func (r *MonitorCache) UpdateState(ctx context.Context, vesselId domain.VesselID
 		err = errors.New("updateState: input data nil")
 		return
 	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	_, err = r.rds.Set(ctx, redisKeys(vesselId)[0], v, 0).Result()
 	return
 }

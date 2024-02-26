@@ -8,13 +8,14 @@ import (
 	"time"
 )
 
-type LocationPoint struct {
-	Location Point `json:"location" db:"location"`
+type Control struct {
+	State        bool       `json:"control" db:"control"`
+	ControlStart *time.Time `json:"controlStart" db:"control_start"`
+	ControlEnd   *time.Time `json:"controlEnd" db:"control_end"`
 }
-
 type Track struct {
 	Timestamp time.Time `json:"timestamp"`
-	LocationPoint
+	Location  Point     `json:"location" db:"location"`
 	Vessel
 }
 
@@ -28,11 +29,23 @@ func (v CurrentZone) MarshalBinary() ([]byte, error) {
 }
 
 type VesselState struct {
+	Control
+	Vessel       Vessel    `json:"vessel"`
 	Timestamp    time.Time `json:"timestamp"`
 	Location     Point     `json:"location"`
-	Vessel       Vessel    `json:"vessel"`
 	CurrentZone  `json:"currentZone"`
 	ZoneDuration string `json:"zoneDuration"`
+}
+
+func NewVesselState(control bool) *VesselState {
+	if control {
+		return &VesselState{
+			Control: Control{
+				State:        control,
+				ControlStart: &[]time.Time{time.Now()}[0]},
+		}
+	}
+	return &VesselState{}
 }
 
 func (v VesselState) MarshalBinary() ([]byte, error) {
@@ -73,9 +86,7 @@ func (v *VesselState) SetFromMap(m map[string]string) (err error) {
 }
 
 func (v *VesselState) ZoneTimeSet() {
-
 	v.ZoneDuration = v.Timestamp.Sub(v.CurrentZone.TimeIn).String()
-
 }
 
 // Point 	(0 - lon, 1 - ltd)

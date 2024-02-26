@@ -13,9 +13,10 @@ const (
 	EnvNameRedisAddress  = "REDIS_ADDRESS"
 	EnvNameRedisPass     = "REDIS_PASS"
 
-	DBZones   = "zones"
-	DBTracks  = "tracks"
-	DBVessels = "vessels"
+	DBZones      = "zones"
+	DBTracks     = "tracks"
+	DBVessels    = "vessels"
+	DBControlLog = "control_log"
 
 	RouteID      = "/:id"
 	RouteApi     = "/api"

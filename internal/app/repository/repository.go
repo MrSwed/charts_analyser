@@ -14,6 +14,7 @@ type Repository struct {
 	Chart
 	Monitor
 	Vessels
+	Log
 }
 
 func NewRepository(db *sqlx.DB, rds *redis.Client) *Repository {
@@ -21,6 +22,7 @@ func NewRepository(db *sqlx.DB, rds *redis.Client) *Repository {
 		Chart:   NewChartRepository(db),
 		Monitor: NewMonitorRepository(rds),
 		Vessels: NewVesselRepository(db),
+		Log:     NewLogRepository(db),
 	}
 }
 
@@ -42,4 +44,8 @@ type Monitor interface {
 	GetState(ctx context.Context, vesselId domain.VesselID) (*domain.VesselState, error)
 	UpdateState(ctx context.Context, vesselId domain.VesselID, v *domain.VesselState) error
 	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
+}
+
+type Log interface {
+	ControlLogAdd(ctx context.Context, log ...domain.ControlLog) error
 }

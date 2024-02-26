@@ -68,7 +68,7 @@ func (s *ChartService) MaybeUpdateState(ctx context.Context, vesselID domain.Ves
 			return err
 		}
 		if state == nil {
-			state = &domain.VesselState{}
+			state = domain.NewVesselState(control)
 		}
 		state.Location = track.Location
 		state.Vessel = track.Vessel
