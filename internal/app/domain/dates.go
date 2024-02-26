@@ -6,8 +6,8 @@ import (
 )
 
 type DateInterval struct {
-	Start  *time.Time `json:"start" form:"start"`
-	Finish *time.Time `json:"finish" form:"finish"`
+	Start  *time.Time `json:"start,omitempty" form:"start"`
+	Finish *time.Time `json:"finish,omitempty" form:"finish"`
 }
 
 // FinishOrNow return now if not set
