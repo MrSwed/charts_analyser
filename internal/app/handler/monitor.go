@@ -135,7 +135,10 @@ func (h *Handler) SetControl() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		err = h.s.SetControl(c, true, VesselIDs...)
+		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+		defer cancel()
+
+		err = h.s.SetControl(ctx, true, VesselIDs...)
 		if err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.AbortWithStatus(http.StatusNotFound)
@@ -186,7 +189,10 @@ func (h *Handler) DelControl() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		err = h.s.SetControl(c, false, VesselIDs...)
+		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+		defer cancel()
+
+		err = h.s.SetControl(ctx, false, VesselIDs...)
 		if err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.AbortWithStatus(http.StatusNotFound)

@@ -125,8 +125,10 @@ func (h *Handler) Track() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
+		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+		defer cancel()
 
-		if err = h.s.Track(c, id, location); err != nil {
+		if err = h.s.Track(ctx, id, location); err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
@@ -175,7 +177,10 @@ func (h *Handler) GetTrack() gin.HandlerFunc {
 		}
 		query.VesselIDs = domain.VesselIDs{id}
 
-		if result, err = h.s.GetTrack(c, query); err != nil {
+		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+		defer cancel()
+
+		if result, err = h.s.GetTrack(ctx, query); err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
