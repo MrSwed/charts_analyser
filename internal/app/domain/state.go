@@ -86,7 +86,9 @@ func (v *VesselState) SetFromMap(m map[string]string) (err error) {
 }
 
 func (v *VesselState) ZoneTimeSet() {
-	v.ZoneDuration = v.Timestamp.Sub(v.CurrentZone.TimeIn).String()
+	if v.Timestamp.After(v.CurrentZone.TimeIn) {
+		v.ZoneDuration = v.Timestamp.Sub(v.CurrentZone.TimeIn).String()
+	}
 }
 
 // Point 	(0 - lon, 1 - ltd)
