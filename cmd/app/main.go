@@ -62,7 +62,7 @@ func runServer(ctx context.Context) {
 		return client
 	}()
 	r := repository.NewRepository(db, redisCli)
-	s := service.NewService(r)
+	s := service.NewService(r, logger)
 	h := handler.NewHandler(s, logger)
 
 	server := &http.Server{Addr: conf.ServerAddress, Handler: h.Handler()}

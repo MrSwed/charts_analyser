@@ -29,13 +29,6 @@ func (h *Handler) Zones() gin.HandlerFunc {
 		var (
 			query domain.InputVesselsInterval
 		)
-		// todo : if post, use json
-		//if body, err := c.GetRawData(); err != nil || len(body) == 0 {
-		//	c.AbortWithStatus(http.StatusBadRequest)
-		//	return
-		//}
-		//err = json.NewDecoder(c.Request.Body).Decode(&query)
-
 		err := c.BindQuery(&query)
 		if err != nil || len(query.VesselIDs) == 0 {
 			c.AbortWithStatus(http.StatusBadRequest)
@@ -71,13 +64,6 @@ func (h *Handler) Vessels() gin.HandlerFunc {
 		var (
 			query domain.InputZone
 		)
-		// todo : if post, use json
-		//if body, err := c.GetRawData(); err != nil || len(body) == 0 {
-		//	c.AbortWithStatus(http.StatusBadRequest)
-		//	return
-		//}
-		//err = json.NewDecoder(c.Request.Body).Decode(&query)
-
 		err := c.Bind(&query)
 		if err != nil || query.ZoneName == "" {
 			c.AbortWithStatus(http.StatusBadRequest)

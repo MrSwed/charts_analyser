@@ -8,15 +8,17 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"time"
 )
 
-func NewMonitorService(r *repository.Repository) *MonitorService {
-	return &MonitorService{r: r}
+func NewMonitorService(r *repository.Repository, log *zap.Logger) *MonitorService {
+	return &MonitorService{r: r, log: log}
 }
 
 type MonitorService struct {
-	r *repository.Repository
+	r   *repository.Repository
+	log *zap.Logger
 }
 
 func (s *MonitorService) IsMonitored(ctx context.Context, vesselId domain.VesselID) (state bool, err error) {
@@ -47,9 +49,9 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 	}
 	// update monitoring status
 	go func(status bool, vesselIDs ...domain.VesselID) {
-		var states []*domain.VesselState
-		if states, err = s.GetStates(ctx, vesselIDs...); len(states) == 0 && err != nil && !errors.Is(err, redis.Nil) {
-			// todo handle error
+		states, err := s.GetStates(ctx, vesselIDs...)
+		if err != nil && !errors.Is(err, redis.Nil) {
+			s.log.Error("Background GetStates for update control", zap.Error(err))
 			return
 		}
 		for _, st := range states {
@@ -60,7 +62,9 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 				st.Control.ControlStart = &[]time.Time{time.Now()}[0]
 				st.Control.ControlEnd = nil
 			}
-			err = s.r.UpdateState(ctx, st.Vessel.ID, st)
+			if err = s.r.UpdateState(ctx, st.Vessel.ID, st); err != nil {
+				s.log.Error("Background UpdateState", zap.Error(err))
+			}
 		}
 	}(status, vesselIDs...)
 	/* log to postgres */
@@ -74,8 +78,9 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 				Comment:   nil,
 			})
 		}
-		// todo : handle error
-		_ = s.r.ControlLogAdd(ctx, cLogs...)
+		if err := s.r.ControlLogAdd(ctx, cLogs...); err != nil {
+			s.log.Error("Background ControlLogAdd", zap.Error(err))
+		}
 	}(ctx, vessels, status)
 
 	return

@@ -51,8 +51,8 @@ var (
 
 func TestZones(t *testing.T) {
 	repo := repository.NewRepository(db, redisCli)
-	s := service.NewService(repo)
 	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
 	h := NewHandler(s, logger).Handler()
 
 	ts := httptest.NewServer(h)
@@ -169,8 +169,8 @@ func TestZones(t *testing.T) {
 
 func TestVessels(t *testing.T) {
 	repo := repository.NewRepository(db, redisCli)
-	s := service.NewService(repo)
 	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
 	h := NewHandler(s, logger).Handler()
 
 	ts := httptest.NewServer(h)

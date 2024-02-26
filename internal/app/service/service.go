@@ -4,6 +4,7 @@ import (
 	"charts_analyser/internal/app/domain"
 	"charts_analyser/internal/app/repository"
 	"context"
+	"go.uber.org/zap"
 )
 
 type Service struct {
@@ -12,10 +13,10 @@ type Service struct {
 	Vessel
 }
 
-func NewService(r *repository.Repository) *Service {
+func NewService(r *repository.Repository, log *zap.Logger) *Service {
 	return &Service{
 		Chart:   NewChartService(r),
-		Monitor: NewMonitorService(r),
+		Monitor: NewMonitorService(r, log),
 		Vessel:  NewVesselService(r),
 	}
 }
