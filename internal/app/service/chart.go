@@ -34,8 +34,7 @@ func (s *ChartService) Track(ctx context.Context, vesselID domain.VesselID, loc 
 		track   = new(domain.Track)
 		vessels domain.Vessels
 	)
-	if loc[0] == 0 || loc[1] == 1 ||
-		loc[0] < constant.GeoAllowedRange[0] || loc[1] < constant.GeoAllowedRange[1] ||
+	if loc[0] < constant.GeoAllowedRange[0] || loc[1] < constant.GeoAllowedRange[1] ||
 		loc[0] > constant.GeoAllowedRange[2] || loc[1] > constant.GeoAllowedRange[3] {
 		err = myErr.ErrLocationOutOfRange
 		return

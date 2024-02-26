@@ -134,7 +134,7 @@ func (h *Handler) Track() gin.HandlerFunc {
 				return
 			}
 			if errors.Is(err, myErr.ErrLocationOutOfRange) {
-				c.String(http.StatusNotFound, myErr.ErrLocationOutOfRange.Error())
+				c.String(http.StatusBadRequest, myErr.ErrLocationOutOfRange.Error())
 				return
 			}
 			c.AbortWithStatus(http.StatusInternalServerError)
