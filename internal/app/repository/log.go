@@ -47,7 +47,6 @@ func (r *LogRepo) ControlLogAdd(ctx context.Context, logs ...domain.ControlLog) 
 			log.Vessel.ID, log.Vessel.Name, log.Timestamp, log.Control, log.Comment); err != nil {
 			return
 		}
-
 	}
 	err = tx.Commit()
 	return

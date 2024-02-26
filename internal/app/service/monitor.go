@@ -1,6 +1,7 @@
 package service
 
 import (
+	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
 	myErr "charts_analyser/internal/app/error"
 	"charts_analyser/internal/app/repository"
@@ -49,8 +50,11 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 	}
 	// update monitoring status
 	go func(status bool, vesselIDs ...domain.VesselID) {
+		ctx, cancel := context.WithTimeout(context.Background(), constant.ServerOperationTimeout)
+		defer cancel()
+
 		states, err := s.GetStates(ctx, vesselIDs...)
-		if err != nil && !errors.Is(err, redis.Nil) {
+		if len(states) == 0 && err != nil && !errors.Is(err, redis.Nil) {
 			s.log.Error("Background GetStates for update control", zap.Error(err))
 			return
 		}
@@ -67,8 +71,11 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 			}
 		}
 	}(status, vesselIDs...)
+
 	/* log to postgres */
-	go func(ctx context.Context, vessels domain.Vessels, status bool) {
+	go func(vessels domain.Vessels, status bool) {
+		ctx, cancel := context.WithTimeout(context.Background(), constant.ServerOperationTimeout)
+		defer cancel()
 		var cLogs []domain.ControlLog
 		for _, v := range vessels {
 			cLogs = append(cLogs, domain.ControlLog{
@@ -81,7 +88,7 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 		if err := s.r.ControlLogAdd(ctx, cLogs...); err != nil {
 			s.log.Error("Background ControlLogAdd", zap.Error(err))
 		}
-	}(ctx, vessels, status)
+	}(vessels, status)
 
 	return
 }
