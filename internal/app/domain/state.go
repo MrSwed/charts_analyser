@@ -13,8 +13,9 @@ type Control struct {
 	ControlStart *time.Time `json:"controlStart" db:"control_start"`
 	ControlEnd   *time.Time `json:"controlEnd" db:"control_end"`
 }
+
 type Track struct {
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp" db:"time"`
 	Location  Point     `json:"location" db:"location"`
 	Vessel
 }

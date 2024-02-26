@@ -100,7 +100,6 @@ func (h *Handler) Vessels() gin.HandlerFunc {
 // @Tags        Track
 // @Summary     Запись трека судна
 // @Description
-// на мониторинг (снять с мониторинга)
 // @Accept      json
 // @Param       vessel_id     query  {array}  domain.VesselID true "ID Судна"
 // @Param       RequestBody   body   []domain.VesselID true "список ID Суден"
@@ -142,5 +141,50 @@ func (h *Handler) Track() gin.HandlerFunc {
 		}
 		status := http.StatusOK
 		c.String(status, "ok")
+	}
+}
+
+// GetTrack
+// @Tags        GetTrack
+// @Summary     Маршрут судна за указанный период
+// @Description
+// @Accept      json
+// @Param       {object} query     domain.DateInterval false "Входные параметры: стартовая дата, конечная дата."
+// @Produce     json
+// @Success     200         {string} string "Ok"
+// @Failure     400
+// @Failure     500
+// @Failure     403          :todo
+// @Router      /track/:id [post]
+func (h *Handler) GetTrack() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var (
+			id     domain.VesselID
+			query  domain.InputVesselsInterval
+			result []domain.Track
+		)
+		err := c.Bind(&query)
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		err = id.SetFromStr(c.Param("id"))
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		query.VesselIDs = domain.VesselIDs{id}
+
+		if result, err = h.s.GetTrack(c, query); err != nil {
+			if errors.Is(err, myErr.ErrNotExist) {
+				c.AbortWithStatus(http.StatusNotFound)
+				return
+			}
+			c.AbortWithStatus(http.StatusInternalServerError)
+			h.log.Error("GetTrack", zap.Error(err), zap.Any("id", id), zap.Any("query", query))
+			return
+		}
+		status := http.StatusOK
+		c.JSON(status, result)
 	}
 }

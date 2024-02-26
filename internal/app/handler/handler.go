@@ -43,6 +43,7 @@ func (h *Handler) Handler() http.Handler {
 
 	track := api.Group(constant.RouteTrack)
 	track.POST("/:id", h.Track())
+	track.GET("/:id", h.GetTrack())
 
 	return h.r
 }

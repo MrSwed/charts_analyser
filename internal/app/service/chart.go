@@ -91,3 +91,7 @@ func (s *ChartService) MaybeUpdateState(ctx context.Context, vesselID domain.Ves
 	}
 	return
 }
+
+func (s *ChartService) GetTrack(ctx context.Context, query domain.InputVesselsInterval) (tracks []domain.Track, err error) {
+	return s.r.Chart.GetTrack(ctx, query)
+}

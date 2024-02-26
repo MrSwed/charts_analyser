@@ -25,6 +25,7 @@ type Chart interface {
 	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
 	Track(ctx context.Context, vesselID domain.VesselID, query domain.Point) (err error)
 	MaybeUpdateState(ctx context.Context, vesselId domain.VesselID, track *domain.Track) error
+	GetTrack(ctx context.Context, query domain.InputVesselsInterval) (tracks []domain.Track, err error)
 }
 
 type Vessel interface {

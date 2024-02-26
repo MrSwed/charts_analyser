@@ -31,6 +31,7 @@ type Chart interface {
 	Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error)
 	ZonesByLocation(ctx context.Context, location domain.Point) (zones []domain.ZoneName, err error)
 	Track(ctx context.Context, track *domain.Track) (err error)
+	GetTrack(ctx context.Context, query domain.InputVesselsInterval) (tracks []domain.Track, err error)
 }
 
 type Vessels interface {

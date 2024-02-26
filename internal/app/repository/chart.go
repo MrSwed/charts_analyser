@@ -107,3 +107,23 @@ func (r *ChartRepo) Track(ctx context.Context, track *domain.Track) (err error) 
 	_, err = r.db.ExecContext(ctx, sqlStr, args...)
 	return
 }
+
+func (r *ChartRepo) GetTrack(ctx context.Context, q domain.InputVesselsInterval) (tracks []domain.Track, err error) {
+	var (
+		sqlStr string
+		args   []interface{}
+	)
+	if sqlStr, args, err = sq.Select("time", "ST_AsGeoJSON(location)::json->>'coordinates' as location", "vessel_id", "vessel_name").
+		From(constant.DBTracks).
+		Where("time between $1 and $2 and vessel_id = any ($3)", q.StartOrLastPeriod(), q.FinishOrNow(), pq.Array(q.VesselIDs)).
+		ToSql(); err != nil {
+		return
+	}
+
+	err = r.db.SelectContext(ctx, &tracks, sqlStr, args...)
+	if tracks == nil {
+		tracks = make([]domain.Track, 0)
+	}
+
+	return
+}
