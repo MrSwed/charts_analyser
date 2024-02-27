@@ -27,6 +27,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logger.Info("Start server", zap.Any("Config", conf))
+
+	if conf.SleepBeforeRun != 0 {
+		logger.Info("Sleep ", zap.Any("sleep seconds", conf.SleepBeforeRun))
+
+		time.Sleep(time.Duration(conf.SleepBeforeRun) * time.Second)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

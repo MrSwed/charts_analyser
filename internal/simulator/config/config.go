@@ -14,9 +14,10 @@ type Out struct {
 
 type Config struct {
 	Out
-	DatabaseDSN   string
-	VesselCount   uint
-	TrackInterval uint
+	DatabaseDSN    string
+	VesselCount    uint
+	TrackInterval  uint
+	SleepBeforeRun uint
 	JWT
 }
 
@@ -26,8 +27,9 @@ type JWT struct {
 
 func NewConfig() *Config {
 	return &Config{
-		VesselCount:   constant.DefaultNumVessels,
-		TrackInterval: constant.DefaultTrackInterval,
+		VesselCount:    constant.DefaultNumVessels,
+		TrackInterval:  constant.DefaultTrackInterval,
+		SleepBeforeRun: constant.DefaultSleepBeforeRun,
 		JWT: JWT{
 			JWTSigningKey: constant.JWTSigningKey},
 	}
@@ -43,6 +45,7 @@ func (c *Config) withFlags() *Config {
 	flag.UintVar(&c.TrackInterval, "i", c.TrackInterval, "Provide the interval between track send, 0 - mean send same time from history source "+constant.EnvNameTrackInterval)
 	flag.UintVar(&c.VesselCount, "c", c.VesselCount, "Provide the count of simulated vessels "+constant.EnvNameVesselCount)
 	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key "+constant.EnvNameJWTSecretKey)
+	flag.UintVar(&c.SleepBeforeRun, "s", c.SleepBeforeRun, "Provide the time sleep before run "+constant.EnvNameSleepBeforeRun)
 	flag.Parse()
 	return c
 }
@@ -66,6 +69,11 @@ func (c *Config) WithEnv() *Config {
 	}
 	if jwt, ok := os.LookupEnv(constant.EnvNameJWTSecretKey); ok && jwt != "" {
 		c.JWTSigningKey = jwt
+	}
+	if env, ok := os.LookupEnv(constant.EnvNameSleepBeforeRun); ok {
+		if env, err := strconv.ParseUint(env, 10, 64); err != nil {
+			c.SleepBeforeRun = uint(env)
+		}
 	}
 	return c
 }

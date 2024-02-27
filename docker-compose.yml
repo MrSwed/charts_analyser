@@ -73,6 +73,7 @@ services:
       charts:
   simulator:
     environment:
+      - SLEEP_BEFORE_RUN=${SLEEP_BEFORE_RUN}
       - DATABASE_DSN=${DATABASE_DSN}
       - ADDRESS=${SERVER_ADDRESS}
       - VESSEL_COUNT=${VESSEL_COUNT}
