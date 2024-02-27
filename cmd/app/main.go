@@ -80,7 +80,7 @@ func runServer(ctx context.Context) {
 
 	r := repository.NewRepository(db, redisCli)
 	s := service.NewService(r, logger)
-	handler.NewHandler(app, s, logger).Handler()
+	handler.NewHandler(app, s, conf, logger).Handler()
 
 	graceShutdown.Add("WEB", func(ctx context.Context) (err error) {
 		if err = app.Shutdown(); err == nil {

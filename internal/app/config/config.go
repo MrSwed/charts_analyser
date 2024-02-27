@@ -12,11 +12,19 @@ type Config struct {
 	DatabaseDSN   string
 	RedisAddress  string
 	RedisPass     string
+	JWT
+}
+
+type JWT struct {
+	JWTSigningKey string
 }
 
 func NewConfig() *Config {
 	return &Config{
 		ServerAddress: constant.ServerAddress,
+		JWT: JWT{
+			JWTSigningKey: constant.JWTSigningKey,
+		},
 	}
 }
 
@@ -37,6 +45,9 @@ func (c *Config) WithEnv() *Config {
 	if redPas, ok := os.LookupEnv(constant.EnvNameRedisPass); ok && redPas != "" {
 		c.RedisPass = redPas
 	}
+	if jwt, ok := os.LookupEnv(constant.EnvNameJWTSecretKey); ok && jwt != "" {
+		c.JWTSigningKey = jwt
+	}
 	return c
 }
 
@@ -45,6 +56,7 @@ func (c *Config) withFlags() *Config {
 	flag.StringVar(&c.DatabaseDSN, "d", c.DatabaseDSN, "Provide the database dsn connect string")
 	flag.StringVar(&c.RedisAddress, "ra", c.RedisAddress, "Provide the redis address")
 	flag.StringVar(&c.RedisPass, "rp", c.RedisPass, "Provide the redis pass")
+	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key")
 	flag.Parse()
 	return c
 }

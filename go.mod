@@ -7,6 +7,8 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.52.1
+	github.com/gofiber/jwt/v2 v2.2.7
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jmoiron/sqlx v1.3.5
