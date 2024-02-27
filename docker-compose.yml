@@ -72,6 +72,10 @@ services:
     networks:
       charts:
   simulator:
+    depends_on:
+      server_app:
+        condition: service_started
+        required: true
     environment:
       - SLEEP_BEFORE_RUN=${SLEEP_BEFORE_RUN}
       - DATABASE_DSN=${DATABASE_DSN}
