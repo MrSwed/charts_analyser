@@ -54,7 +54,7 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 		defer cancel()
 
 		states, err := s.GetStates(ctx, vesselIDs...)
-		if len(states) == 0 && err != nil && !errors.Is(err, redis.Nil) {
+		if len(states) == 0 && err != nil && !errors.Is(err, myErr.ErrNotExist) {
 			s.log.Error("Background GetStates for update control", zap.Error(err))
 			return
 		}
