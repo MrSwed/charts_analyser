@@ -58,16 +58,18 @@ func (s *RequestService) SendTrack(ctx context.Context, vesselID appDomain.Vesse
 }
 func (s *RequestService) SetControl(ctx context.Context, vesselID appDomain.VesselID) {
 	var err error
+	var body []byte
+	if body, err = json.Marshal([]int64{int64(vesselID)}); err != nil || len(body) == 0 {
+		s.l.Error("unmarshal error or empty body!", zap.Error(err), zap.Any("location", []int64{int64(vesselID)}))
+		return
+	}
 
 	urlStr := s.c.ServerAddress + constant.RouteMonitor
 	var req *http.Request
-	if req, err = http.NewRequest("POST", urlStr, nil); err != nil {
+	if req, err = http.NewRequest("POST", urlStr, bytes.NewBuffer(body)); err != nil {
 		s.l.Error("http.NewRequest", zap.Error(err), zap.Any("url", urlStr))
 		return
 	}
-	q := req.URL.Query()
-	q.Add("vessel_id", vesselID.String())
-	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
