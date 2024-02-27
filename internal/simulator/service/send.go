@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
-	"strconv"
 )
 
 type RequestService struct {
@@ -31,7 +30,7 @@ func (s *RequestService) SendTrack(ctx context.Context, vesselID appDomain.Vesse
 		return
 	}
 
-	urlStr := s.c.ServerAddress + constant.RouteTrack + "/" + strconv.FormatInt(int64(vesselID), 10)
+	urlStr := s.c.ServerAddress + constant.RouteTrack
 	var req *http.Request
 	if req, err = http.NewRequestWithContext(ctx, "POST", urlStr, bytes.NewBuffer(body)); err != nil {
 		s.l.Error("http.NewRequest", zap.Error(err), zap.Any("url", urlStr), zap.String("body", string(body)))
