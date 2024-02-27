@@ -41,9 +41,8 @@ func (h *Handler) Handler() *Handler {
 	monitor.Delete("", h.DelControl())
 
 	track := api.Group(constant.RouteTrack)
-	track.Use(veAw)
-	track.Post(constant.RouteID, h.Track())
-	track.Get(constant.RouteID, h.GetTrack())
+	track.Post("", veAw, h.Track())
+	track.Get(constant.RouteID, opAw, h.GetTrack())
 
 	return h
 }

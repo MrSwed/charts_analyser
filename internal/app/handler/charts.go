@@ -90,23 +90,27 @@ func (h *Handler) Vessels() fiber.Handler {
 // @Summary     Запись трека судна
 // @Description
 // @Accept      json
-// @Param       vessel_id     query  {array}  domain.VesselID true "ID Судна"
-// @Param       RequestBody   body   []domain.VesselID true "список ID Суден"
+// @Param       vessel_id     header  {int64}  domain.VesselID true "ID Судна"
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
 // @Failure     403          :todo
-// @Router      /track/{id} [post]
+// @Router      /track/ [post]
+// @Security    ApiKeyAuth
 func (h *Handler) Track() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
 			location domain.Point
-			id       domain.VesselID
+			id       = GetVesselId(c)
 		)
-		err = id.SetFromStr(c.Params("id"))
-		if err != nil {
-			c.Status(http.StatusBadRequest)
+		//err = id.SetFromStr(c.Params("id"))
+		//if err != nil {
+		//	c.Status(http.StatusBadRequest)
+		//	return
+		//}
+		if id == 0 {
+			c.Status(http.StatusForbidden)
 			return
 		}
 		err = c.BodyParser(&location)
@@ -147,6 +151,7 @@ func (h *Handler) Track() fiber.Handler {
 // @Failure     500
 // @Failure     403          :todo
 // @Router      /track/{id} [post]
+// @Security    ApiKeyAuth
 func (h *Handler) GetTrack() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (

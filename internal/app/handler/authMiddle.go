@@ -3,6 +3,7 @@ package handler
 import (
 	"charts_analyser/internal/app/config"
 	"charts_analyser/internal/app/constant"
+	"charts_analyser/internal/app/domain"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -29,6 +30,19 @@ func CheckIsRole(expRole constant.Role) fiber.Handler {
 	}
 }
 
+func GetVesselId(c *fiber.Ctx) (id domain.VesselID) {
+	claims := GetTokenClaims(c)
+	if role(claims).CheckIsRole(constant.RoleVessel) {
+		switch cl := claims["id"].(type) {
+		case float64:
+			id = domain.VesselID(cl)
+		case string:
+			_ = id.SetFromStr(cl)
+		}
+	}
+	return
+}
+
 func GetTokenClaims(c *fiber.Ctx) (claims jwt.MapClaims) {
 	if u := c.Locals(constant.CtxStorageKey); u != nil {
 		claims = u.(*jwt.Token).Claims.(jwt.MapClaims)
@@ -40,5 +54,5 @@ func GetTokenClaims(c *fiber.Ctx) (claims jwt.MapClaims) {
 }
 
 func role(claims jwt.MapClaims) constant.Role {
-	return constant.Role(claims["role"].(float64))
+	return constant.Role(claims[constant.TokenRoleName].(float64))
 }
