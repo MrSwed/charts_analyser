@@ -4,27 +4,12 @@ package handler
 
 import (
 	"charts_analyser/internal/app/config"
-	"charts_analyser/internal/app/constant"
-	"charts_analyser/internal/app/domain"
-	"charts_analyser/internal/app/repository"
-	"charts_analyser/internal/app/service"
 	"context"
-	"encoding/json"
 	"github.com/redis/go-redis/v9"
 	"log"
 
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strconv"
-	"testing"
-	"time"
-
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 var (
@@ -49,6 +34,7 @@ var (
 	}()
 )
 
+/* todo: need refactor tests for fiber * /
 func TestZones(t *testing.T) {
 	repo := repository.NewRepository(db, redisCli)
 	logger, _ := zap.NewDevelopment()
@@ -283,7 +269,7 @@ func TestVessels(t *testing.T) {
 		})
 	}
 }
-
+/**/
 /*todo tests
 MonitoredList
 SetControl

@@ -30,6 +30,8 @@ const (
 	RedisVeselPrefix    = "vessel:"
 	RedisControlIds     = "_control:ids"
 	RedisControlVessels = "_control:vessels"
+
+	LogFormat = "[${time}] ${status} - ${latency} ${method} ${path}\n"
 )
 
 var GeoAllowedRange = [4]float64{-180, -75, 180, 75}

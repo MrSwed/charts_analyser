@@ -9,6 +9,10 @@ import (
 	"charts_analyser/internal/common/closer"
 	"context"
 	"errors"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberLog "github.com/gofiber/fiber/v2/middleware/logger"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -61,13 +65,29 @@ func runServer(ctx context.Context) {
 		}
 		return client
 	}()
+
+	app := fiber.New()
+	app.Use(fiberLog.New(fiberLog.Config{
+		Format: constant.LogFormat,
+		Output: os.Stdout,
+	}))
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://" + conf.ServerAddress,
+		AllowCredentials: true,
+		//MaxAge:           defaultCorsMaxAge,
+	}))
+
 	r := repository.NewRepository(db, redisCli)
 	s := service.NewService(r, logger)
-	h := handler.NewHandler(s, logger)
+	handler.NewHandler(app, s, logger).Handler()
 
-	server := &http.Server{Addr: conf.ServerAddress, Handler: h.Handler()}
-
-	graceShutdown.Add("WEB", server.Shutdown)
+	graceShutdown.Add("WEB", func(ctx context.Context) (err error) {
+		if err = app.Shutdown(); err == nil {
+			logger.Info("Db Closed")
+		}
+		return
+	})
 
 	graceShutdown.Add("DB Close", func(ctx context.Context) (err error) {
 		if err = db.Close(); err == nil {
@@ -84,7 +104,7 @@ func runServer(ctx context.Context) {
 	})
 
 	go func() {
-		if err = server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err = app.Listen(conf.ServerAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("Start server", zap.Error(err))
 		}
 	}()

@@ -1,7 +1,7 @@
 package domain
 
 type InputVessels struct {
-	VesselIDs VesselIDs `json:"vessel_id" form:"vessel_id"`
+	VesselIDs VesselIDs `json:"vesselIDs"`
 }
 
 type InputVesselsInterval struct {
@@ -10,10 +10,10 @@ type InputVesselsInterval struct {
 }
 
 type InputZone struct {
-	ZoneName `json:"zone_name" form:"zone_name"`
+	ZoneName ZoneName `json:"zoneName"`
 	DateInterval
 }
 
 type InputVessel struct {
-	VesselName `json:"vessel_name,omitempty" form:"vessel_name,omitempty"`
+	VesselName `json:"vesselName,omitempty"`
 }

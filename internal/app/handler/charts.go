@@ -6,7 +6,7 @@ import (
 	myErr "charts_analyser/internal/app/error"
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -17,33 +17,35 @@ import (
 // @Summary     список морских карт
 // @Description которые пересекались заданными в запросе судами в заданный временной промежуток.
 // @Accept      json
-// @Param       {object} query     domain.InputVesselsInterval false "Входные параметры: идентификаторы судов, стартовая дата, конечная дата."
+// @Param       json {object} body     domain.InputVesselsInterval false "Входные параметры: идентификаторы судов, стартовая дата, конечная дата."
 // @Produce     json
 // @Success     200         {object} []string
 // @Failure     400
 // @Failure     500
 // @Failure     403          :todo
 // @Router      /vessel [get]
-func (h *Handler) Zones() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (h *Handler) Zones() fiber.Handler {
+	//
+	return func(c *fiber.Ctx) (err error) {
 		var (
 			query domain.InputVesselsInterval
 		)
-		err := c.BindQuery(&query)
-		if err != nil || len(query.VesselIDs) == 0 {
-			c.AbortWithStatus(http.StatusBadRequest)
+		err = c.BodyParser(&query)
+		if err != nil && !errors.Is(err, io.EOF) {
+			c.Status(http.StatusBadRequest)
 			return
 		}
-		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
-		defer cancel()
 
-		result, err := h.s.Chart.Zones(ctx, query)
+		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
+		defer cancel()
+		var result []domain.ZoneName
+		result, err = h.s.Chart.Zones(ctx, query)
 		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error get zones", zap.Error(err))
+
 		}
-		status := http.StatusOK
-		c.JSON(status, result)
+		return c.Status(http.StatusOK).JSON(result)
 	}
 }
 
@@ -59,26 +61,27 @@ func (h *Handler) Zones() gin.HandlerFunc {
 // @Failure     500
 // @Failure     403          :todo
 // @Router      /zones [get]
-func (h *Handler) Vessels() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (h *Handler) Vessels() fiber.Handler {
+	return func(c *fiber.Ctx) (err error) {
 		var (
 			query domain.InputZone
 		)
-		err := c.Bind(&query)
-		if err != nil || query.ZoneName == "" {
-			c.AbortWithStatus(http.StatusBadRequest)
+		err = c.BodyParser(&query)
+		if err != nil && !errors.Is(err, io.EOF) {
+			c.Status(http.StatusBadRequest)
 			return
 		}
-		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+
+		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
-		result, err := h.s.Chart.Vessels(ctx, query)
+		var result []domain.VesselID
+		result, err = h.s.Chart.Vessels(ctx, query)
 		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error vessel zones", zap.Error(err))
 		}
-		status := http.StatusOK
-		c.JSON(status, result)
+		return c.Status(http.StatusOK).JSON(result)
 	}
 }
 
@@ -94,41 +97,41 @@ func (h *Handler) Vessels() gin.HandlerFunc {
 // @Failure     400
 // @Failure     500
 // @Failure     403          :todo
-// @Router      /track/:id [post]
-func (h *Handler) Track() gin.HandlerFunc {
-	return func(c *gin.Context) {
+// @Router      /track/{id} [post]
+func (h *Handler) Track() fiber.Handler {
+	return func(c *fiber.Ctx) (err error) {
 		var (
 			location domain.Point
 			id       domain.VesselID
 		)
-		err := id.SetFromStr(c.Param("id"))
+		err = id.SetFromStr(c.Params("id"))
 		if err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.Status(http.StatusBadRequest)
 			return
 		}
-		err = c.ShouldBindJSON(&location)
+		err = c.BodyParser(&location)
 		if err != nil && !errors.Is(err, io.EOF) {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.Status(http.StatusBadRequest)
 			return
 		}
-		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
 		if err = h.s.Track(ctx, id, location); err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
-				c.AbortWithStatus(http.StatusNotFound)
+				c.Status(http.StatusNotFound)
 				return
 			}
 			if errors.Is(err, myErr.ErrLocationOutOfRange) {
-				c.String(http.StatusBadRequest, myErr.ErrLocationOutOfRange.Error())
+				_, err = c.Status(http.StatusBadRequest).WriteString(myErr.ErrLocationOutOfRange.Error())
 				return
 			}
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.Status(http.StatusInternalServerError)
 			h.log.Error("SetControl", zap.Error(err), zap.Any("id", id), zap.Any("location", location))
 			return
 		}
-		status := http.StatusOK
-		c.String(status, "ok")
+		_, err = c.Status(http.StatusOK).WriteString("ok")
+		return
 	}
 }
 
@@ -143,39 +146,38 @@ func (h *Handler) Track() gin.HandlerFunc {
 // @Failure     400
 // @Failure     500
 // @Failure     403          :todo
-// @Router      /track/:id [post]
-func (h *Handler) GetTrack() gin.HandlerFunc {
-	return func(c *gin.Context) {
+// @Router      /track/{id} [post]
+func (h *Handler) GetTrack() fiber.Handler {
+	return func(c *fiber.Ctx) (err error) {
 		var (
 			id     domain.VesselID
 			query  domain.InputVesselsInterval
 			result []domain.Track
 		)
-		err := c.Bind(&query)
+		err = c.QueryParser(&query)
 		if err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.Status(http.StatusBadRequest)
 			return
 		}
-		err = id.SetFromStr(c.Param("id"))
+		err = id.SetFromStr(c.Params("id"))
 		if err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.Status(http.StatusBadRequest)
 			return
 		}
 		query.VesselIDs = domain.VesselIDs{id}
 
-		ctx, cancel := context.WithTimeout(c, constant.ServerOperationTimeout)
+		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
 		if result, err = h.s.GetTrack(ctx, query); err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
-				c.AbortWithStatus(http.StatusNotFound)
+				c.Status(http.StatusNotFound)
 				return
 			}
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.Status(http.StatusInternalServerError)
 			h.log.Error("GetTrack", zap.Error(err), zap.Any("id", id), zap.Any("query", query))
 			return
 		}
-		status := http.StatusOK
-		c.JSON(status, result)
+		return c.Status(http.StatusOK).JSON(result)
 	}
 }

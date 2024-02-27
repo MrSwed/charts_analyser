@@ -3,47 +3,44 @@ package handler
 import (
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/service"
-	ginzap "github.com/gin-contrib/zap"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 type Handler struct {
+	app *fiber.App
 	s   *service.Service
-	r   *gin.Engine
 	log *zap.Logger
 }
 
-func NewHandler(s *service.Service, log *zap.Logger) *Handler {
-	return &Handler{s: s, log: log}
+func NewHandler(app *fiber.App, s *service.Service, log *zap.Logger) *Handler {
+	return &Handler{s: s, log: log, app: app}
 }
 
 // Handler init routes
-func (h *Handler) Handler() http.Handler {
+func (h *Handler) Handler() *Handler {
 
-	h.r = gin.New()
-	h.r.Use(ginzap.Ginzap(h.log, time.RFC3339, true))
+	h.app.Use(logger.New(logger.Config{}))
+
+	//h.app.Use(ginzap.Ginzap(h.log, time.RFC3339, true))
 
 	// TODO maybe:
-	//h.r.Use(middleware.Compress(gzip.DefaultCompression))
-	//h.r.Use(middleware.Decompress())
-	//h.r.Use(h.getUserID())
+	//h.app.Use(h.getUserID())
 
-	api := h.r.Group(constant.RouteApi)
-	api.GET(constant.RouteZones, h.Zones())
-	api.GET(constant.RouteVessels, h.Vessels())
+	api := h.app.Group(constant.RouteApi)
+	api.Get(constant.RouteZones, h.Zones())
+	api.Get(constant.RouteVessels, h.Vessels())
 
 	monitor := api.Group(constant.RouteMonitor)
-	monitor.GET("/state", h.VesselState())
-	monitor.GET("", h.MonitoredList())
-	monitor.POST("", h.SetControl())
-	monitor.DELETE("", h.DelControl())
+	monitor.Get("/state", h.VesselState())
+	monitor.Get("", h.MonitoredList())
+	monitor.Post("", h.SetControl())
+	monitor.Delete("", h.DelControl())
 
 	track := api.Group(constant.RouteTrack)
-	track.POST("/:id", h.Track())
-	track.GET("/:id", h.GetTrack())
+	track.Post(constant.RouteID, h.Track())
+	track.Get(constant.RouteID, h.GetTrack())
 
-	return h.r
+	return h
 }
