@@ -40,9 +40,9 @@ func (c *Config) Init() *Config {
 func (c *Config) withFlags() *Config {
 	flag.StringVar(&c.ServerAddress, "a", c.ServerAddress, "Provide the address start server, can set with env "+constant.EnvNameServerAddress)
 	flag.StringVar(&c.DatabaseDSN, "d", c.DatabaseDSN, "Database dsn connect string, can set with env "+constant.EnvNameDBDSN)
-	flag.UintVar(&c.TrackInterval, "i", c.TrackInterval, "Provide the interval between track send, 0 - mean send same time from history source")
-	flag.UintVar(&c.VesselCount, "c", c.VesselCount, "Provide the count of simulated vessels")
-	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key")
+	flag.UintVar(&c.TrackInterval, "i", c.TrackInterval, "Provide the interval between track send, 0 - mean send same time from history source "+constant.EnvNameTrackInterval)
+	flag.UintVar(&c.VesselCount, "c", c.VesselCount, "Provide the count of simulated vessels "+constant.EnvNameVesselCount)
+	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key "+constant.EnvNameJWTSecretKey)
 	flag.Parse()
 	return c
 }
