@@ -52,11 +52,11 @@ func (c *Config) WithEnv() *Config {
 }
 
 func (c *Config) withFlags() *Config {
-	flag.StringVar(&c.ServerAddress, "a", c.ServerAddress, "Provide the address start server")
-	flag.StringVar(&c.DatabaseDSN, "d", c.DatabaseDSN, "Provide the database dsn connect string")
-	flag.StringVar(&c.RedisAddress, "ra", c.RedisAddress, "Provide the redis address")
-	flag.StringVar(&c.RedisPass, "rp", c.RedisPass, "Provide the redis pass")
-	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key")
+	flag.StringVar(&c.ServerAddress, "a", c.ServerAddress, "Provide the address start server "+constant.EnvNameServerAddress)
+	flag.StringVar(&c.DatabaseDSN, "d", c.DatabaseDSN, "Provide the database dsn connect string "+constant.EnvNameDBDSN)
+	flag.StringVar(&c.RedisAddress, "ra", c.RedisAddress, "Provide the redis address "+constant.EnvNameRedisAddress)
+	flag.StringVar(&c.RedisPass, "rp", c.RedisPass, "Provide the redis pass "+constant.EnvNameRedisPass)
+	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key "+constant.EnvNameJWTSecretKey)
 	flag.Parse()
 	return c
 }
