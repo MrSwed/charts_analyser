@@ -71,6 +71,13 @@ services:
       - "3000:3000"
     networks:
       charts:
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://${ADDRESS}" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
   simulator:
     depends_on:
       server_app:
