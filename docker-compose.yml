@@ -10,6 +10,14 @@ services:
       - 5000:5432
     volumes:
       - ./.local/postgresql/data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    networks:
+      charts:
   redis:
     image: redis:latest
     restart: always
@@ -22,6 +30,10 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_PORT=${REDIS_PORT}
       - REDIS_DATABASES=${REDIS_DATABASES}
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    networks:
+      charts:
   migrate:
     depends_on:
       postgis:
@@ -31,14 +43,17 @@ services:
       context: .
       target: migrate
     volumes:
-      - ./data:/data
-      - ./migrate:/migrate
+      - ./data:/app/data
+      - ./migrate:/app/migrate
     environment:
       - DATABASE_DSN=${DATABASE_DSN}
       - CHARTS_PATH=${CHARTS_PATH}
       - MIGRATE_PATH=${MIGRATE_PATH}
       - GEO_ZONES=${GEO_ZONES}
+    networks:
+      charts:
   server_app:
+    restart: unless-stopped
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -46,8 +61,6 @@ services:
       dockerfile: Dockerfile
       context: .
       target: server_app
-    volumes:
-      - .:/opt/app/api
     environment:
       - DATABASE_DSN=${DATABASE_DSN}
       - ADDRESS=${LISTEN_ADDRESS}
@@ -56,6 +69,8 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     ports:
       - "3000:3000"
+    networks:
+      charts:
   simulator:
     depends_on:
       server_app:
@@ -70,3 +85,7 @@ services:
       dockerfile: Dockerfile
       context: .
       target: simulator
+    networks:
+      charts:
+networks:
+  charts:
