@@ -80,11 +80,7 @@ func (h *Handler) VesselState() fiber.Handler {
 		defer cancel()
 
 		result, err := h.s.Monitor.GetStates(ctx, VesselIDs...)
-		if err != nil {
-			if errors.Is(err, myErr.ErrNotExist) {
-				c.Status(http.StatusNotFound)
-				return
-			}
+		if err != nil && !errors.Is(err, myErr.ErrNotExist) {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error get states", zap.Error(err), zap.Any("ids", VesselIDs))
 		}

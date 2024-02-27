@@ -103,6 +103,7 @@ func (s *MonitorService) GetStates(ctx context.Context, vesselIds ...domain.Vess
 		}
 	}
 	if len(states) == 0 {
+		states = []*domain.VesselState{}
 		err = myErr.ErrNotExist
 	}
 	return
