@@ -17,12 +17,19 @@ type Config struct {
 	DatabaseDSN   string
 	VesselCount   uint
 	TrackInterval uint
+	JWT
+}
+
+type JWT struct {
+	JWTSigningKey string
 }
 
 func NewConfig() *Config {
 	return &Config{
 		VesselCount:   constant.DefaultNumVessels,
 		TrackInterval: constant.DefaultTrackInterval,
+		JWT: JWT{
+			JWTSigningKey: constant.JWTSigningKey},
 	}
 }
 
@@ -35,7 +42,7 @@ func (c *Config) withFlags() *Config {
 	flag.StringVar(&c.DatabaseDSN, "d", c.DatabaseDSN, "Database dsn connect string, can set with env "+constant.EnvNameDBDSN)
 	flag.UintVar(&c.TrackInterval, "i", c.TrackInterval, "Provide the interval between track send, 0 - mean send same time from history source")
 	flag.UintVar(&c.VesselCount, "c", c.VesselCount, "Provide the count of simulated vessels")
-
+	flag.StringVar(&c.JWTSigningKey, "j", c.JWTSigningKey, "Provide the jwt secret key")
 	flag.Parse()
 	return c
 }
@@ -56,6 +63,9 @@ func (c *Config) WithEnv() *Config {
 		if env, err := strconv.ParseUint(env, 10, 64); err != nil {
 			c.VesselCount = uint(env)
 		}
+	}
+	if jwt, ok := os.LookupEnv(constant.EnvNameJWTSecretKey); ok && jwt != "" {
+		c.JWTSigningKey = jwt
 	}
 	return c
 }

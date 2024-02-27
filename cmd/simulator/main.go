@@ -2,6 +2,7 @@ package main
 
 import (
 	"charts_analyser/internal/simulator/config"
+	"charts_analyser/internal/simulator/constant"
 	"charts_analyser/internal/simulator/domain"
 	"charts_analyser/internal/simulator/repository"
 	"charts_analyser/internal/simulator/service"
@@ -34,6 +35,14 @@ func main() {
 		logger.Fatal("cannot connect db", zap.Error(err))
 	}
 
+	operatorClaims := domain.ClaimsOperator{}
+
+	if operatorToken, err := operatorClaims.Token(conf.JWTSigningKey); err == nil && operatorToken != "" {
+		ctx = context.WithValue(ctx, constant.CtxValueKeyJWTOperator, operatorToken)
+	} else if err != nil {
+		logger.Fatal("Build operator jwt", zap.Error(err))
+	}
+
 	r := repository.NewRepository(db, nil)
 	s := service.NewService(r, conf, logger)
 	vessels, err := s.Vessels.GetRandomVessels(ctx, conf.VesselCount)
@@ -53,8 +62,14 @@ func main() {
 			defer wg.Done()
 			time.Sleep(100 * time.Millisecond)
 			logger.Info("Start simulation for", zap.Any("vessel", vessel.String()))
-			//ctxVessel := context.WithValue(ctx, "vessel", vessel)
-			s.SimulateVessel(ctx, vessel)
+
+			vesselClaims := domain.ClaimsVessel{Vessel: &vessel.Vessel}
+			jwtStr, er := vesselClaims.Token(conf.JWTSigningKey)
+			if er != nil {
+				logger.Fatal("Build vessel jwt", zap.Error(err))
+			}
+			vesselCtx := context.WithValue(ctx, constant.CtxValueKeyJWTVessel, jwtStr)
+			s.SimulateVessel(vesselCtx, vessel)
 		}(v)
 	}
 	logger.Info("Simulation started for IDs: ", zap.Any("ids", ids))

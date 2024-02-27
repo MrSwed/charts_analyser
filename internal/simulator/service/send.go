@@ -38,6 +38,9 @@ func (s *RequestService) SendTrack(ctx context.Context, vesselID appDomain.Vesse
 		return
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if jwtStr, ok := ctx.Value(constant.CtxValueKeyJWTVessel).(string); ok && len(jwtStr) > 0 {
+		req.Header.Set("Authorization", "Bearer "+jwtStr)
+	}
 
 	var res *http.Response
 	if res, err = http.DefaultClient.Do(req); err != nil {
@@ -56,6 +59,7 @@ func (s *RequestService) SendTrack(ctx context.Context, vesselID appDomain.Vesse
 
 	return
 }
+
 func (s *RequestService) SetControl(ctx context.Context, vesselID appDomain.VesselID) {
 	var err error
 	var body []byte
@@ -72,6 +76,9 @@ func (s *RequestService) SetControl(ctx context.Context, vesselID appDomain.Vess
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if jwtStr, ok := ctx.Value(constant.CtxValueKeyJWTOperator).(string); ok && len(jwtStr) > 0 {
+		req.Header.Set("Authorization", "Bearer "+jwtStr)
+	}
 
 	var res *http.Response
 	if res, err = http.DefaultClient.Do(req); err != nil {
