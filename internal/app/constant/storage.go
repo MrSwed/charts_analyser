@@ -9,4 +9,6 @@ const (
 	RedisVeselPrefix    = "vessel:"
 	RedisControlIds     = "_control:ids"
 	RedisControlVessels = "_control:vessels"
+	RedisAddress        = "localhost:6379"
+	RedisPort           = "6379"
 )
