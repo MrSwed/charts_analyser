@@ -25,7 +25,7 @@ func (s *ChartService) Zones(ctx context.Context, query domain.InputVesselsInter
 	return s.r.Chart.Zones(ctx, query)
 }
 
-func (s *ChartService) Vessels(ctx context.Context, query domain.InputZone) (vesselIDs []domain.VesselID, err error) {
+func (s *ChartService) Vessels(ctx context.Context, query domain.InputZones) (vesselIDs []domain.VesselID, err error) {
 	return s.r.Chart.Vessels(ctx, query)
 }
 

@@ -61,7 +61,7 @@ func (r *ChartRepo) ZonesByLocation(ctx context.Context, location domain.Point) 
 	return
 }
 
-func (r *ChartRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs []domain.VesselID, err error) {
+func (r *ChartRepo) Vessels(ctx context.Context, q domain.InputZones) (vesselIDs []domain.VesselID, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
@@ -70,7 +70,7 @@ func (r *ChartRepo) Vessels(ctx context.Context, q domain.InputZone) (vesselIDs 
 	if sqlStr, args, err = sq.Select("vessel_id").
 		InnerJoin(constant.DBZones+" z on st_contains(z.geometry, t.location)").
 		From(constant.DBTracks+" t").
-		Where("time between $1 and $2 and z.name = $3", q.StartOrLastPeriod(), q.FinishOrNow(), q.ZoneName).
+		Where("time between $1 and $2 and z.name = any ($3)", q.StartOrLastPeriod(), q.FinishOrNow(), pq.Array(q.ZoneNames)).
 		GroupBy("vessel_id").
 		ToSql(); err != nil {
 		return

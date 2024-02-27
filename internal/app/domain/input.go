@@ -9,8 +9,8 @@ type InputVesselsInterval struct {
 	DateInterval
 }
 
-type InputZone struct {
-	ZoneName ZoneName `json:"zoneName"`
+type InputZones struct {
+	ZoneNames []ZoneName `json:"zoneNames"`
 	DateInterval
 }
 

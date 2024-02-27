@@ -54,7 +54,7 @@ func (h *Handler) Zones() fiber.Handler {
 // @Summary     список судов
 // @Description которые пересекали заданные в запросе морские карты в заданный временной промежуток.
 // @Accept      json
-// @Param       {object} query     domain.InputZone false "Входные параметры: идентификатор карт, стартовая дата, конечная дата."
+// @Param       {object} query     domain.InputZones false "Входные параметры: идентификатор карт, стартовая дата, конечная дата."
 // @Produce     json
 // @Success     200         {object} []uint64
 // @Failure     400
@@ -64,7 +64,7 @@ func (h *Handler) Zones() fiber.Handler {
 func (h *Handler) Vessels() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
-			query domain.InputZone
+			query domain.InputZones
 		)
 		err = c.BodyParser(&query)
 		if err != nil && !errors.Is(err, io.EOF) {
