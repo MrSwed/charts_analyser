@@ -58,12 +58,12 @@ func (c *Config) WithEnv() *Config {
 		c.DatabaseDSN = env
 	}
 	if env, ok := os.LookupEnv(constant.EnvNameTrackInterval); ok {
-		if env, err := strconv.ParseUint(env, 10, 64); err != nil {
+		if env, err := strconv.ParseUint(env, 10, 64); err == nil {
 			c.TrackInterval = uint(env)
 		}
 	}
 	if env, ok := os.LookupEnv(constant.EnvNameVesselCount); ok {
-		if env, err := strconv.ParseUint(env, 10, 64); err != nil {
+		if env, err := strconv.ParseUint(env, 10, 64); err == nil {
 			c.VesselCount = uint(env)
 		}
 	}
@@ -71,7 +71,7 @@ func (c *Config) WithEnv() *Config {
 		c.JWTSigningKey = jwt
 	}
 	if env, ok := os.LookupEnv(constant.EnvNameSleepBeforeRun); ok {
-		if env, err := strconv.ParseUint(env, 10, 64); err != nil {
+		if env, err := strconv.ParseUint(env, 10, 64); err == nil {
 			c.SleepBeforeRun = uint(env)
 		}
 	}
