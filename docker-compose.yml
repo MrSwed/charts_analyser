@@ -3,22 +3,70 @@ services:
     image: postgis/postgis
     restart: always
     environment:
-      - POSTGRES_DB=gis
-      - POSTGRES_USER=gis
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - 5000:5432
     volumes:
-      - ./data/_postgis:/var/lib/postgresql/data
+      - ./.local/postgresql/data:/var/lib/postgresql/data
   redis:
     image: redis:latest
     restart: always
     ports:
       - "6379:6379"
     volumes:
-      - ./data/_redis:/root/redis
+      - ./.local/redis:/root/redis
       - /etc/redis/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
-      - REDIS_PASSWORD=my-password
-      - REDIS_PORT=6379
-      - REDIS_DATABASES=16
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DATABASES=${REDIS_DATABASES}
+  migrate:
+    depends_on:
+      postgis:
+        condition: service_healthy
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: migrate
+    volumes:
+      - ./data:/data
+      - ./migrate:/migrate
+    environment:
+      - DATABASE_DSN=${DATABASE_DSN}
+      - CHARTS_PATH=${CHARTS_PATH}
+      - MIGRATE_PATH=${MIGRATE_PATH}
+      - GEO_ZONES=${GEO_ZONES}
+  server_app:
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: server_app
+    volumes:
+      - .:/opt/app/api
+    environment:
+      - DATABASE_DSN=${DATABASE_DSN}
+      - ADDRESS=${LISTEN_ADDRESS}
+      - REDIS_ADDRESS=${REDIS_ADDRESS}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    ports:
+      - "3000:3000"
+  simulator:
+    depends_on:
+      server_app:
+        condition: service_healthy
+    environment:
+      - DATABASE_DSN=${DATABASE_DSN}
+      - ADDRESS=${SERVER_ADDRESS}
+      - VESSEL_COUNT=${VESSEL_COUNT}
+      - TRACK_INTERVAL=${TRACK_INTERVAL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: simulator

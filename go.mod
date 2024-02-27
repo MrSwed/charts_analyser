@@ -1,6 +1,6 @@
 module charts_analyser
 
-go 1.21.0
+go 1.21
 
 require (
 	github.com/Goldziher/go-utils v1.7.4
