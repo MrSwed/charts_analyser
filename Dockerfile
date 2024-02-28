@@ -16,7 +16,7 @@ COPY --from=builder migrate_app /migrate_app
 ENTRYPOINT ["/migrate_app"]
 
 FROM scratch as server_app
-EXPOSE 3000
+EXPOSE ${LISTEN_PORT}
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder server_app /server_app
 ENTRYPOINT ["/server_app"]

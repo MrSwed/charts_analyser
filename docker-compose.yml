@@ -67,7 +67,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     ports:
-      - "3000:3000"
+      - ${LISTEN_PORT}:${LISTEN_PORT}
     networks:
       charts:
   simulator:

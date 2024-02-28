@@ -82,21 +82,21 @@ func runServer(ctx context.Context) {
 	s := service.NewService(r, logger)
 	handler.NewHandler(app, s, conf, logger).Handler()
 
-	graceShutdown.Add("WEB", func(ctx context.Context) (err error) {
+	graceShutdown.Add("APP", func(ctx context.Context) (err error) {
 		if err = app.Shutdown(); err == nil {
-			logger.Info("Db Closed")
+			logger.Info("APP Closed")
 		}
 		return
 	})
 
-	graceShutdown.Add("DB Close", func(ctx context.Context) (err error) {
+	graceShutdown.Add("DB", func(ctx context.Context) (err error) {
 		if err = db.Close(); err == nil {
 			logger.Info("Db Closed")
 		}
 		return
 	})
 
-	graceShutdown.Add("Redis Close", func(ctx context.Context) (err error) {
+	graceShutdown.Add("Redis", func(ctx context.Context) (err error) {
 		if err = redisCli.Close(); err == nil {
 			logger.Info("Redis Closed")
 		}
