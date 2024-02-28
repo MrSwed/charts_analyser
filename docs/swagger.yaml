@@ -250,38 +250,6 @@ paths:
     get:
       consumes:
       - application/json
-      description: которые пересекались заданными в запросе судами в заданный временной
-        промежуток.
-      parameters:
-      - description: 'Входные параметры: идентификаторы судов, стартовая дата, конечная
-          дата.'
-        in: body
-        name: InputVesselsInterval
-        required: true
-        schema:
-          $ref: '#/definitions/domain.InputVesselsInterval'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: string
-            type: array
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-      security:
-      - BearerAuth: []
-      summary: список морских карт
-      tags:
-      - Chart
-  /zones:
-    get:
-      consumes:
-      - application/json
       description: которые пересекали указанные морские карты в заданный временной
         промежуток.
       parameters:
@@ -308,6 +276,38 @@ paths:
       security:
       - BearerAuth: []
       summary: список судов
+      tags:
+      - Chart
+  /zones:
+    get:
+      consumes:
+      - application/json
+      description: которые пересекались заданными в запросе судами в заданный временной
+        промежуток.
+      parameters:
+      - description: 'Входные параметры: идентификаторы судов, стартовая дата, конечная
+          дата.'
+        in: body
+        name: InputVesselsInterval
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputVesselsInterval'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: список морских карт
       tags:
       - Chart
 securityDefinitions:

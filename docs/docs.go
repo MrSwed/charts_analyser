@@ -311,54 +311,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "которые пересекались заданными в запросе судами в заданный временной промежуток.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chart"
-                ],
-                "summary": "список морских карт",
-                "parameters": [
-                    {
-                        "description": "Входные параметры: идентификаторы судов, стартовая дата, конечная дата.",
-                        "name": "InputVesselsInterval",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.InputVesselsInterval"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/zones": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "которые пересекали указанные морские карты в заданный временной промежуток.",
                 "consumes": [
                     "application/json"
@@ -388,6 +340,54 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "type": "integer"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/zones": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "которые пересекались заданными в запросе судами в заданный временной промежуток.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chart"
+                ],
+                "summary": "список морских карт",
+                "parameters": [
+                    {
+                        "description": "Входные параметры: идентификаторы судов, стартовая дата, конечная дата.",
+                        "name": "InputVesselsInterval",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputVesselsInterval"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
                             }
                         }
                     },
