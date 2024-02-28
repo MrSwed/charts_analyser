@@ -3,10 +3,26 @@
 package handler
 
 import (
+	"bytes"
 	"charts_analyser/internal/app/config"
+	"charts_analyser/internal/app/constant"
+	"charts_analyser/internal/app/domain"
+	"charts_analyser/internal/app/repository"
+	"charts_analyser/internal/app/service"
 	"context"
+	"encoding/json"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"io"
 	"log"
+	"net/http"
+	"strconv"
+	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -34,15 +50,16 @@ var (
 	}()
 )
 
-/* todo: need refactor tests for fiber * /
 func TestZones(t *testing.T) {
 	repo := repository.NewRepository(db, redisCli)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
-	h := NewHandler(s, logger).Handler()
+	app := fiber.New()
+	app.Use(recover.New())
 
-	ts := httptest.NewServer(h)
-	defer ts.Close()
+	h := NewHandler(app, s, conf, logger)
+	api := app.Group(constant.RouteApi)
+	api.Get(constant.RouteZones, h.Zones())
 
 	vesselId := int64(9110913)
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
@@ -57,7 +74,7 @@ func TestZones(t *testing.T) {
 	}
 	type args struct {
 		method string
-		query  map[string]string
+		query  map[string]interface{}
 	}
 	tests := []struct {
 		name string
@@ -68,8 +85,8 @@ func TestZones(t *testing.T) {
 			name: "Get vessel 'Federal Saguenay' zones",
 			args: args{
 				method: http.MethodGet,
-				query: map[string]string{
-					"vessel_id": strconv.FormatInt(vesselId, 10),
+				query: map[string]interface{}{
+					"vesselIDs": []int64{vesselId},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -77,31 +94,15 @@ func TestZones(t *testing.T) {
 			want: want{
 				code:        http.StatusOK,
 				responseLen: true,
-				contentType: "application/json; charset=utf-8",
+				contentType: "application/json",
 			},
 		},
 		{
-			name: "Get unknown vessels zones",
+			name: "Get vessel 'Federal Saguenay' zones (id as string), bad Request",
 			args: args{
 				method: http.MethodGet,
-				query: map[string]string{
-					"vessel_id": strconv.FormatInt(10000000000, 10),
-					"start":     timeStart.Format(time.RFC3339),
-					"finish":    timeEnd.Format(time.RFC3339),
-				},
-			},
-			want: want{
-				code:        http.StatusOK,
-				responseLen: false,
-				contentType: "application/json; charset=utf-8",
-			},
-		},
-		{
-			name: "Get zones with bad parameters",
-			args: args{
-				method: http.MethodGet,
-				query: map[string]string{
-					"vessel_id": "string instead number",
+				query: map[string]interface{}{
+					"vesselIDs": []string{strconv.FormatInt(vesselId, 10)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -110,22 +111,34 @@ func TestZones(t *testing.T) {
 				code: http.StatusBadRequest,
 			},
 		},
+		{
+			name: "Get unknown vessels zones",
+			args: args{
+				method: http.MethodGet,
+				query: map[string]interface{}{
+					"vesselIDs": []int64{10000000000},
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: false,
+				contentType: "application/json",
+			},
+		},
 	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//b := new(bytes.Buffer)
-			//err := json.NewEncoder(b).Encode(test.args.query)
-			//require.NoError(t, err)
-
-			req, err := http.NewRequest(test.args.method, ts.URL+constant.RouteApi+constant.RouteZones, nil)
+			t.Parallel()
+			bodyJson, _ := json.Marshal(&test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteZones, bytes.NewReader(bodyJson))
 			require.NoError(t, err)
-			q := req.URL.Query()
-			for k, v := range test.args.query {
-				q.Add(k, v)
-			}
-			req.URL.RawQuery = q.Encode()
 
-			res, err := http.DefaultClient.Do(req)
+			request.Header.Set("Content-Type", "application/json")
+
+			res, err := app.Test(request)
 			var resBody []byte
 
 			require.Equal(t, test.want.code, res.StatusCode)
@@ -157,10 +170,12 @@ func TestVessels(t *testing.T) {
 	repo := repository.NewRepository(db, redisCli)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
-	h := NewHandler(s, logger).Handler()
+	app := fiber.New()
+	app.Use(recover.New())
 
-	ts := httptest.NewServer(h)
-	defer ts.Close()
+	h := NewHandler(app, s, conf, logger)
+	api := app.Group(constant.RouteApi)
+	api.Get(constant.RouteVessels, h.Vessels())
 
 	zoneName := "zone_205"
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
@@ -175,7 +190,7 @@ func TestVessels(t *testing.T) {
 	}
 	type args struct {
 		method string
-		query  map[string]string
+		query  map[string]interface{}
 	}
 	tests := []struct {
 		name string
@@ -186,8 +201,8 @@ func TestVessels(t *testing.T) {
 			name: "Get zone 'zone_205' vessels",
 			args: args{
 				method: http.MethodGet,
-				query: map[string]string{
-					"zone_name": zoneName,
+				query: map[string]interface{}{
+					"zoneNames": []string{zoneName},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -195,15 +210,15 @@ func TestVessels(t *testing.T) {
 			want: want{
 				code:        http.StatusOK,
 				responseLen: true,
-				contentType: "application/json; charset=utf-8",
+				contentType: "application/json",
 			},
 		},
 		{
 			name: "Get zone 'zone_XXX' vessels",
 			args: args{
 				method: http.MethodGet,
-				query: map[string]string{
-					"zone_name": "zone_XXX",
+				query: map[string]interface{}{
+					"zoneNames": []string{"zone_XXX"},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -211,15 +226,15 @@ func TestVessels(t *testing.T) {
 			want: want{
 				code:        http.StatusOK,
 				responseLen: false,
-				contentType: "application/json; charset=utf-8",
+				contentType: "application/json",
 			},
 		},
 		{
 			name: "Get zones with bad parameters",
 			args: args{
 				method: http.MethodGet,
-				query: map[string]string{
-					"vessel_id": "string instead number",
+				query: map[string]interface{}{
+					"vesselIDs": []string{"fring keys"},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -227,22 +242,18 @@ func TestVessels(t *testing.T) {
 			want: want{
 				code: http.StatusBadRequest,
 			},
-		}}
+		},
+	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//b := new(bytes.Buffer)
-			//err := json.NewEncoder(b).Encode(test.args.query)
-			//require.NoError(t, err)
-
-			req, err := http.NewRequest(test.args.method, ts.URL+constant.RouteApi+constant.RouteVessels, nil)
+			t.Parallel()
+			bodyJson, _ := json.Marshal(&test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteVessels, bytes.NewReader(bodyJson))
 			require.NoError(t, err)
-			q := req.URL.Query()
-			for k, v := range test.args.query {
-				q.Add(k, v)
-			}
-			req.URL.RawQuery = q.Encode()
 
-			res, err := http.DefaultClient.Do(req)
+			request.Header.Set("Content-Type", "application/json")
+
+			res, err := app.Test(request)
 			var resBody []byte
 
 			require.Equal(t, test.want.code, res.StatusCode)
@@ -269,6 +280,7 @@ func TestVessels(t *testing.T) {
 		})
 	}
 }
+
 /**/
 /*todo tests
 MonitoredList
