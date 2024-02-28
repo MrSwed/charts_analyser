@@ -498,7 +498,7 @@ const docTemplate = `{
         "BearerAuth": {
             "description": "Insert your access token default (Bearer access_token_here)",
             "type": "apiKey",
-            "name": "Authorization Barer",
+            "name": "Authorization",
             "in": "header"
         }
     }

@@ -25,7 +25,7 @@ const (
 
 // @securityDefinitions.apikey BearerAuth
 // @in             header
-// @name           Authorization Barer
+// @name           Authorization
 // @description    Insert your access token default (Bearer access_token_here)
 
 // @BasePath /api/

@@ -314,6 +314,6 @@ securityDefinitions:
   BearerAuth:
     description: Insert your access token default (Bearer access_token_here)
     in: header
-    name: Authorization Barer
+    name: Authorization
     type: apiKey
 swagger: "2.0"
