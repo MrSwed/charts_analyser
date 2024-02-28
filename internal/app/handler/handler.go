@@ -5,7 +5,6 @@ import (
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/zap"
 )
 
@@ -22,8 +21,6 @@ func NewHandler(app *fiber.App, s *service.Service, conf *config.Config, log *za
 
 // Handler init routes
 func (h *Handler) Handler() *Handler {
-
-	h.app.Use(logger.New(logger.Config{}))
 
 	api := h.app.Group(constant.RouteApi)
 	api.Use(GetAccessWare(&h.conf.JWT))

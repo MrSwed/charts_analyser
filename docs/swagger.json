@@ -1,0 +1,498 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Charts analyser: web-service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:3000",
+    "basePath": "/api/",
+    "paths": {
+        "/monitor/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "поставленных на мониторинг",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "MonitoredList"
+                ],
+                "summary": "Список судов",
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Vessel"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SetControl"
+                ],
+                "summary": "Поставить судно на контроль",
+                "parameters": [
+                    {
+                        "description": "список ID Судов",
+                        "name": "VesselIDs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/monitor/state": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "для выбранных судов, стоящих на мониторинге",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "VesselState"
+                ],
+                "summary": "Текущие данные",
+                "parameters": [
+                    {
+                        "description": "список ID Судов",
+                        "name": "VesselIDs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.VesselState"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "no data yet"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/monitor/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DelControl"
+                ],
+                "summary": "Снять судно с контроля",
+                "parameters": [
+                    {
+                        "description": "список ID Судов",
+                        "name": "VesselIDs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/track/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Track"
+                ],
+                "summary": "Запись трека судна",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer: JWT claims must have: id key used as vesselID and role: 1",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "[lon, lat]",
+                        "name": "Point",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/track/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GetTrack"
+                ],
+                "summary": "Маршрут судна за указанный период",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Судна ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "finish",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "start",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/vessel": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "которые пересекали указанные морские карты в заданный временной промежуток.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chart"
+                ],
+                "summary": "список судов",
+                "parameters": [
+                    {
+                        "description": "Входные параметры: идентификаторы карт, стартовая дата, конечная дата.",
+                        "name": "InputZones",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputZones"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/zones": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "которые пересекались заданными в запросе судами в заданный временной промежуток.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chart"
+                ],
+                "summary": "список морских карт",
+                "parameters": [
+                    {
+                        "description": "Входные параметры: идентификаторы судов, стартовая дата, конечная дата.",
+                        "name": "InputVesselsInterval",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputVesselsInterval"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.CurrentZone": {
+            "type": "object",
+            "properties": {
+                "timeIn": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "domain.InputVesselsInterval": {
+            "type": "object",
+            "properties": {
+                "finish": {
+                    "type": "string"
+                },
+                "start": {
+                    "type": "string"
+                },
+                "vesselIDs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "domain.InputZones": {
+            "type": "object",
+            "properties": {
+                "finish": {
+                    "type": "string"
+                },
+                "start": {
+                    "type": "string"
+                },
+                "zoneNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "domain.Vessel": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.VesselState": {
+            "type": "object",
+            "properties": {
+                "control": {
+                    "type": "boolean"
+                },
+                "controlEnd": {
+                    "type": "string"
+                },
+                "controlStart": {
+                    "type": "string"
+                },
+                "currentZone": {
+                    "$ref": "#/definitions/domain.CurrentZone"
+                },
+                "location": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "vessel": {
+                    "$ref": "#/definitions/domain.Vessel"
+                },
+                "zoneDuration": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Insert your access token default (Bearer access_token_here)",
+            "type": "apiKey",
+            "name": "Authorization Barer",
+            "in": "header"
+        }
+    }
+}

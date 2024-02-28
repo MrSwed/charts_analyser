@@ -51,7 +51,7 @@ services:
       - GEO_ZONES=${GEO_ZONES}
     networks:
       charts:
-  server_app:
+  server:
     restart: unless-stopped
     depends_on:
       migrate:
@@ -59,7 +59,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-      target: server_app
+      target: server
     environment:
       - DATABASE_DSN=${DATABASE_DSN}
       - ADDRESS=${LISTEN_ADDRESS}
@@ -72,7 +72,7 @@ services:
       charts:
   simulator:
     depends_on:
-      server_app:
+      server:
         condition: service_started
         required: true
     environment:
@@ -86,6 +86,18 @@ services:
       dockerfile: Dockerfile
       context: .
       target: simulator
+    networks:
+      charts:
+  swagger:
+    restart: unless-stopped
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: swagger
+    environment:
+      - SWAGGER_PORT=${SWAGGER_PORT}
+    ports:
+      - ${SWAGGER_PORT}:${SWAGGER_PORT}
     networks:
       charts:
 networks:
