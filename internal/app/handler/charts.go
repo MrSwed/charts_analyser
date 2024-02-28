@@ -31,9 +31,9 @@ func (h *Handler) Zones() fiber.Handler {
 			query domain.InputVesselsInterval
 		)
 		err = c.BodyParser(&query)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil && !errors.Is(err, io.EOF) || len(query.VesselIDs) == 0 {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
@@ -43,7 +43,7 @@ func (h *Handler) Zones() fiber.Handler {
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error get zones", zap.Error(err))
-
+			return nil
 		}
 		return c.Status(http.StatusOK).JSON(result)
 	}
@@ -67,9 +67,9 @@ func (h *Handler) Vessels() fiber.Handler {
 			query domain.InputZones
 		)
 		err = c.BodyParser(&query)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil && !errors.Is(err, io.EOF) || len(query.ZoneNames) == 0 {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
@@ -80,6 +80,7 @@ func (h *Handler) Vessels() fiber.Handler {
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error vessel zones", zap.Error(err))
+			return nil
 		}
 		return c.Status(http.StatusOK).JSON(result)
 	}
@@ -112,12 +113,12 @@ func (h *Handler) Track() fiber.Handler {
 		//}
 		if id == 0 {
 			c.Status(http.StatusForbidden)
-			return
+			return nil
 		}
 		err = c.BodyParser(&location)
 		if err != nil && !errors.Is(err, io.EOF) {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
@@ -125,7 +126,7 @@ func (h *Handler) Track() fiber.Handler {
 		if err = h.s.Track(ctx, id, location); err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.Status(http.StatusNotFound)
-				return
+				return nil
 			}
 			if errors.Is(err, myErr.ErrLocationOutOfRange) {
 				_, err = c.Status(http.StatusBadRequest).WriteString(myErr.ErrLocationOutOfRange.Error())
@@ -133,7 +134,7 @@ func (h *Handler) Track() fiber.Handler {
 			}
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("SetControl", zap.Error(err), zap.Any("id", id), zap.Any("location", location))
-			return
+			return nil
 		}
 		_, err = c.Status(http.StatusOK).WriteString("ok")
 		return
@@ -163,12 +164,12 @@ func (h *Handler) GetTrack() fiber.Handler {
 		err = c.QueryParser(&query)
 		if err != nil {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 		err = id.SetFromStr(c.Params("id"))
 		if err != nil {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 		query.VesselIDs = domain.VesselIDs{id}
 
@@ -178,11 +179,11 @@ func (h *Handler) GetTrack() fiber.Handler {
 		if result, err = h.s.GetTrack(ctx, query); err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.Status(http.StatusNotFound)
-				return
+				return nil
 			}
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("GetTrack", zap.Error(err), zap.Any("id", id), zap.Any("query", query))
-			return
+			return nil
 		}
 		return c.Status(http.StatusOK).JSON(result)
 	}

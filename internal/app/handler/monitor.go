@@ -32,6 +32,7 @@ func (h *Handler) MonitoredList() fiber.Handler {
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error monitored list", zap.Error(err))
+			return nil
 		}
 		return c.Status(http.StatusOK).JSON(result)
 	}
@@ -58,7 +59,7 @@ func (h *Handler) VesselState() fiber.Handler {
 		err = c.BodyParser(&VesselIDs)
 		if err != nil && !errors.Is(err, io.EOF) {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 
 		if len(VesselIDs) == 0 {
@@ -66,14 +67,14 @@ func (h *Handler) VesselState() fiber.Handler {
 			if err = c.QueryParser(&query); err != nil {
 				c.Status(http.StatusBadRequest)
 				h.log.Error("SetControl,query", zap.Error(err))
-				return
+				return nil
 			}
 			VesselIDs = query.VesselIDs
 		}
 
 		if len(VesselIDs) == 0 {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
@@ -83,6 +84,7 @@ func (h *Handler) VesselState() fiber.Handler {
 		if err != nil && !errors.Is(err, myErr.ErrNotExist) {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error get states", zap.Error(err), zap.Any("ids", VesselIDs))
+			return nil
 		}
 		return c.Status(http.StatusOK).JSON(result)
 	}
@@ -109,7 +111,7 @@ func (h *Handler) SetControl() fiber.Handler {
 		err = c.BodyParser(&VesselIDs)
 		if err != nil && !errors.Is(err, io.EOF) {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 
 		if len(VesselIDs) == 0 {
@@ -117,14 +119,14 @@ func (h *Handler) SetControl() fiber.Handler {
 			if err = c.QueryParser(&query); err != nil {
 				c.Status(http.StatusBadRequest)
 				h.log.Error("SetControl,query", zap.Error(err))
-				return
+				return nil
 			}
 			VesselIDs = query.VesselIDs
 		}
 
 		if len(VesselIDs) == 0 {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
@@ -133,11 +135,11 @@ func (h *Handler) SetControl() fiber.Handler {
 		if err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.Status(http.StatusNotFound)
-				return
+				return nil
 			}
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("SetControl", zap.Error(err), zap.Any("ids", VesselIDs))
-			return
+			return nil
 		}
 		_, err = c.Status(http.StatusOK).WriteString("ok")
 		return
@@ -164,12 +166,12 @@ func (h *Handler) DelControl() fiber.Handler {
 		err = c.BodyParser(&VesselIDs)
 		if err != nil && !errors.Is(err, io.EOF) {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 
 		if len(VesselIDs) == 0 {
 			c.Status(http.StatusBadRequest)
-			return
+			return nil
 		}
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
@@ -178,11 +180,11 @@ func (h *Handler) DelControl() fiber.Handler {
 		if err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.Status(http.StatusNotFound)
-				return
+				return nil
 			}
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("SetControl", zap.Error(err), zap.Any("ids", VesselIDs))
-			return
+			return nil
 		}
 		_, err = c.Status(http.StatusOK).WriteString("ok")
 		return
