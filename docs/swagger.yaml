@@ -1,0 +1,309 @@
+definitions:
+  domain.CurrentZone:
+    properties:
+      timeIn:
+        type: string
+      zones:
+        items:
+          type: string
+        type: array
+    type: object
+  domain.InputVesselsInterval:
+    properties:
+      finish:
+        type: string
+      start:
+        type: string
+      vesselIDs:
+        items:
+          type: integer
+        type: array
+    type: object
+  domain.InputZones:
+    properties:
+      finish:
+        type: string
+      start:
+        type: string
+      zoneNames:
+        items:
+          type: string
+        type: array
+    type: object
+  domain.Vessel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.VesselState:
+    properties:
+      control:
+        type: boolean
+      controlEnd:
+        type: string
+      controlStart:
+        type: string
+      currentZone:
+        $ref: '#/definitions/domain.CurrentZone'
+      location:
+        items:
+          type: number
+        type: array
+      timestamp:
+        type: string
+      vessel:
+        $ref: '#/definitions/domain.Vessel'
+      zoneDuration:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /monitor/:
+    get:
+      consumes:
+      - application/json
+      description: поставленных на мониторинг
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Список судов
+      tags:
+      - MonitoredList
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Поставить судно на контроль
+      tags:
+      - SetControl
+  /monitor/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Снять судно с контроля
+      tags:
+      - DelControl
+  /monitor/state:
+    get:
+      consumes:
+      - application/json
+      description: для выбранных судов, стоящих на мониторинге
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            items:
+              $ref: '#/definitions/domain.VesselState'
+            type: array
+        "400":
+          description: Bad Request
+        "404":
+          description: no data yet
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Текущие данные
+      tags:
+      - VesselState
+  /track/:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'Bearer: JWT claims must have: id key used as vesselID and role:
+          1'
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: '[lon, lat]'
+        in: body
+        name: Point
+        required: true
+        schema:
+          items:
+            type: number
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Запись трека судна
+      tags:
+      - Track
+  /track/{id}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'ID Судна '
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: query
+        name: finish
+        type: string
+      - in: query
+        name: start
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Маршрут судна за указанный период
+      tags:
+      - GetTrack
+  /vessel:
+    get:
+      consumes:
+      - application/json
+      description: которые пересекались заданными в запросе судами в заданный временной
+        промежуток.
+      parameters:
+      - description: 'Входные параметры: идентификаторы судов, стартовая дата, конечная
+          дата.'
+        in: body
+        name: InputVesselsInterval
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputVesselsInterval'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: список морских карт
+      tags:
+      - Chart
+  /zones:
+    get:
+      consumes:
+      - application/json
+      description: которые пересекали указанные морские карты в заданный временной
+        промежуток.
+      parameters:
+      - description: 'Входные параметры: идентификаторы карт, стартовая дата, конечная
+          дата.'
+        in: body
+        name: InputZones
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputZones'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: список судов
+      tags:
+      - Chart
+swagger: "2.0"

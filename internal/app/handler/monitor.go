@@ -21,8 +21,8 @@ import (
 // @Success     200         {object} []domain.Vessel "Ok"
 // @Failure     400
 // @Failure     500
-// @Failure     403          :todo
 // @Router      /monitor/ [get]
+// @Security    BearerAuth
 func (h *Handler) MonitoredList() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 
@@ -43,13 +43,13 @@ func (h *Handler) MonitoredList() fiber.Handler {
 // @Description для выбранных судов, стоящих на мониторинге
 // @Accept      json
 // @Produce     json
-// @Param       RequestBody   body   []domain.VesselID true "список ID Судов"
+// @Param       VesselIDs   body     []domain.VesselID    true "список ID Судов"
 // @Success     200         {object} []domain.VesselState "Ok"
 // @Failure     400
 // @Failure     404           "no data yet"
 // @Failure     500
-// @Failure     403          :todo
 // @Router      /monitor/state [get]
+// @Security    BearerAuth
 func (h *Handler) VesselState() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
@@ -94,13 +94,13 @@ func (h *Handler) VesselState() fiber.Handler {
 // @Description
 // на мониторинг (снять с мониторинга)
 // @Accept      json
-// @Param       RequestBody   body   []domain.VesselID true "список ID Суден"
+// @Param       VesselIDs   body   []domain.VesselID true "список ID Судов"
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
-// @Failure     403          :todo
 // @Router      /monitor/ [post]
+// @Security    BearerAuth
 func (h *Handler) SetControl() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
@@ -149,13 +149,13 @@ func (h *Handler) SetControl() fiber.Handler {
 // @Summary     Снять судно с контроля
 // @Description
 // @Accept      json
-// @Param       RequestBody   body   []domain.VesselID true "список ID Суден"
+// @Param       VesselIDs   body   []domain.VesselID true "список ID Судов"
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
-// @Failure     403          :todo
 // @Router      /monitor/{id} [delete]
+// @Security    BearerAuth
 func (h *Handler) DelControl() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (

@@ -1,11 +1,14 @@
 package handler
 
+//go:generate swag init -g ./handler.go
+
 import (
 	"charts_analyser/internal/app/config"
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +27,8 @@ func NewHandler(app *fiber.App, s *service.Service, conf *config.Config, log *za
 func (h *Handler) Handler() *Handler {
 
 	h.app.Use(logger.New(logger.Config{}))
+
+	h.app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	api := h.app.Group(constant.RouteApi)
 	api.Use(GetAccessWare(&h.conf.JWT))
