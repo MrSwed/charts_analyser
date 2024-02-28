@@ -1,8 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "title": "Charts analyser: web-service API",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost:3000",
+    "basePath": "/api/",
     "paths": {
         "/monitor/": {
             "get": {
@@ -481,6 +485,14 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Insert your access token default (Bearer access_token_here)",
+            "type": "apiKey",
+            "name": "Authorization Barer",
+            "in": "header"
         }
     }
 }

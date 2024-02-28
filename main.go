@@ -1,6 +1,6 @@
 package main
 
-//go:generate swag init -g internal/app/handler/handler.go
+//go:generate swag init
 
 import (
 	_ "charts_analyser/docs"

@@ -1,3 +1,4 @@
+basePath: /api/
 definitions:
   domain.CurrentZone:
     properties:
@@ -58,8 +59,11 @@ definitions:
       zoneDuration:
         type: string
     type: object
+host: localhost:3000
 info:
   contact: {}
+  title: 'Charts analyser: web-service API'
+  version: "1.0"
 paths:
   /monitor/:
     get:
@@ -306,4 +310,10 @@ paths:
       summary: список судов
       tags:
       - Chart
+securityDefinitions:
+  BearerAuth:
+    description: Insert your access token default (Bearer access_token_here)
+    in: header
+    name: Authorization Barer
+    type: apiKey
 swagger: "2.0"
