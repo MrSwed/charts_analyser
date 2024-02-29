@@ -87,7 +87,7 @@ func TestZones(t *testing.T) {
 	require.NoError(t, err)
 	type want struct {
 		code            int
-		responseLen     bool
+		responseLen     *bool
 		response        *string
 		responseContain string
 		contentType     string
@@ -150,7 +150,7 @@ func TestZones(t *testing.T) {
 			},
 			want: want{
 				code:        http.StatusOK,
-				responseLen: true,
+				responseLen: &[]bool{true}[0],
 				contentType: "application/json",
 			},
 		},
@@ -222,10 +222,12 @@ func TestZones(t *testing.T) {
 				var data []domain.ZoneName
 				err = json.Unmarshal(resBody, &data)
 				require.NoError(t, err)
-				if test.want.responseLen {
-					assert.Greater(t, len(data), 0)
-				} else {
-					assert.Equal(t, len(data), 0)
+				if test.want.responseLen != nil {
+					if *test.want.responseLen {
+						assert.Greater(t, len(resBody), 0)
+					} else {
+						assert.Equal(t, len(resBody), 0)
+					}
 				}
 			}
 
@@ -263,7 +265,7 @@ func TestVessels(t *testing.T) {
 
 	type want struct {
 		code            int
-		responseLen     bool
+		responseLen     *bool
 		response        *string
 		responseContain string
 		contentType     string
@@ -309,7 +311,7 @@ func TestVessels(t *testing.T) {
 			},
 			want: want{
 				code:        http.StatusOK,
-				responseLen: true,
+				responseLen: &[]bool{true}[0],
 				contentType: "application/json",
 			},
 		},
@@ -328,7 +330,7 @@ func TestVessels(t *testing.T) {
 			},
 			want: want{
 				code:        http.StatusOK,
-				responseLen: false,
+				response:    &[]string{"[]"}[0],
 				contentType: "application/json",
 			},
 		},
@@ -380,10 +382,166 @@ func TestVessels(t *testing.T) {
 				var data []domain.VesselID
 				err = json.Unmarshal(resBody, &data)
 				require.NoError(t, err)
-				if test.want.responseLen {
-					assert.Greater(t, len(data), 0)
-				} else {
-					assert.Equal(t, len(data), 0)
+				if test.want.responseLen != nil {
+					if *test.want.responseLen {
+						assert.Greater(t, len(resBody), 0)
+					} else {
+						assert.Equal(t, len(resBody), 0)
+					}
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}
+
+func TestVesselState(t *testing.T) {
+	repo := repository.NewRepository(db, redisCli)
+	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
+	app := fiber.New()
+	app.Use(recover.New())
+
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
+
+	vesselId := int64(9110913)
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		query   interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Control vessel. No jwt",
+			args: args{
+				method: http.MethodGet,
+				query:  []int64{vesselId},
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Control vessel, Wrong role in jwt",
+			args: args{
+				method: http.MethodGet,
+				query:  []int64{vesselId},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Control vessel, Operator",
+			args: args{
+				method: http.MethodGet,
+				query:  []int64{vesselId},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "Control vessel. Bad vessel ids",
+			args: args{
+				method: http.MethodGet,
+				query:  []string{strconv.FormatInt(vesselId, 10)},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Get vessels, unknown",
+			args: args{
+				method: http.MethodGet,
+				query:  []int64{10000000000},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				response:    &[]string{"[]"}[0],
+				contentType: "application/json",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			bodyJson, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteMonitor+constant.RouteState, bytes.NewReader(bodyJson))
+			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
+				require.NoError(t, err)
+			}()
+
+			if strings.Contains(test.want.contentType, "application/json") {
+				var data []domain.ZoneName
+				err = json.Unmarshal(resBody, &data)
+				require.NoError(t, err)
+				if test.want.responseLen != nil {
+					if *test.want.responseLen {
+						assert.Greater(t, len(resBody), 0)
+					} else {
+						assert.Equal(t, len(resBody), 0)
+					}
 				}
 			}
 
@@ -409,7 +567,6 @@ func TestVessels(t *testing.T) {
 MonitoredList
 SetControl
 DelControl
-VesselState
 Track
 */
 

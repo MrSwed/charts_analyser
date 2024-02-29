@@ -6,5 +6,6 @@ const (
 	RouteVessels = "/vessels"
 	RouteZones   = "/zones"
 	RouteMonitor = "/monitor"
+	RouteState   = "/state"
 	RouteTrack   = "/track"
 )
