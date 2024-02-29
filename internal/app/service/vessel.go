@@ -19,7 +19,7 @@ type VesselService struct {
 
 func (s *VesselService) GetVessels(ctx context.Context, vesselIDs ...domain.VesselID) (vessel domain.Vessels, err error) {
 	vessel, err = s.r.GetVessels(ctx, vesselIDs...)
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) || len(vessel) == 0 {
 		err = myErr.ErrNotExist
 	}
 	return

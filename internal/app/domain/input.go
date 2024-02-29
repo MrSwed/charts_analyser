@@ -17,3 +17,5 @@ type InputZones struct {
 type InputVessel struct {
 	VesselName `json:"vesselName,omitempty"`
 }
+
+type InputPoint []float64
