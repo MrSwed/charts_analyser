@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,27 @@ import (
 type testConfig struct {
 	config.Config
 	jwtOperator string
-	jwtVessel   string
+}
+
+type ClaimsVessel struct {
+	jwt.RegisteredClaims
+	*domain.Vessel
+	Role int64 `json:"role"`
+}
+
+func (c *ClaimsVessel) Token(key string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, ClaimsVessel{
+		RegisteredClaims: jwt.RegisteredClaims{},
+		Vessel:           c.Vessel,
+		Role:             1,
+	})
+
+	tokenString, err := token.SignedString([]byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 func newEnvConfig() (c *testConfig) {
@@ -44,7 +65,6 @@ func newEnvConfig() (c *testConfig) {
 	c = &testConfig{}
 	c.WithEnv().CleanSchemes()
 	c.jwtOperator = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEwMCIsIm5hbWUiOiJPcGVyYXRvcjEwMCIsInJvbGUiOjJ9.OSc0cSsEvxcz_waNjenJlJiCA9xcIjs1ZvDTi9RNBuKAvD5hBLDvm7XwFCIg9uv-lK-Yxb-62XJuuiNxA0FlcA"
-	c.jwtVessel = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkyMzM0NjYiLCJuYW1lIjoiU2FnYSBWaWtpbmciLCJyb2xlIjoxfQ.7gbx8YufboNZo3uqGXcFRHIIoIWZt8tQdtNFiuun9Z3_e5a9IWOFw88Wx2rQuhkJwgB6SBPvP_rpqqmK36yL0w"
 
 	return
 }
@@ -81,6 +101,10 @@ func TestZones(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselId := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
 	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2020-10-09 00:00:00`)
@@ -128,7 +152,7 @@ func TestZones(t *testing.T) {
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + jwtVessel,
 				},
 			},
 			want: want{
@@ -339,7 +363,7 @@ func TestVessels(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
-					"vesselIDs": []string{"fring keys"},
+					"vesselIDs": []string{"wrong keys"},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -418,6 +442,9 @@ func TestVesselState(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselId := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
 
 	type want struct {
 		code            int
@@ -454,7 +481,7 @@ func TestVesselState(t *testing.T) {
 				method: http.MethodGet,
 				query:  []int64{vesselId},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + jwtVessel,
 				},
 			},
 			want: want{
@@ -571,6 +598,11 @@ func TestMonitoredList(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
+	vesselId := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -603,7 +635,7 @@ func TestMonitoredList(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + jwtVessel,
 				},
 			},
 			want: want{
@@ -691,6 +723,10 @@ func TestSetControl(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselId := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -726,7 +762,7 @@ func TestSetControl(t *testing.T) {
 				method: http.MethodPost,
 				query:  []int64{vesselId},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + jwtVessel,
 				},
 			},
 			want: want{
@@ -854,6 +890,10 @@ func TestDeleteControl(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselId := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -889,7 +929,7 @@ func TestDeleteControl(t *testing.T) {
 				method: http.MethodDelete,
 				query:  []int64{vesselId},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + jwtVessel,
 				},
 			},
 			want: want{
