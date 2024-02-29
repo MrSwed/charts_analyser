@@ -1,6 +1,6 @@
-// to test with real db set env DATABASE_DSN before run with created, but empty tables
-// to test with file - set env FILE_STORAGE_PATH
 package handler
+
+// to test with real db set env DATABASE_DSN before run with created, but empty tables
 
 import (
 	"bytes"
@@ -25,11 +25,21 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
+func newEnvConfig() (c *config.Config) {
+	err := godotenv.Load(".env.test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	c = (&config.Config{}).WithEnv().CleanSchemes()
+	return
+}
+
 var (
-	conf     = config.NewConfig().WithEnv()
+	conf     = newEnvConfig()
 	redisCli = func() *redis.Client {
 		client := redis.NewClient(&redis.Options{
 			Addr:     conf.RedisAddress,
