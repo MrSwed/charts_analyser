@@ -781,7 +781,7 @@ func TestSetControl(t *testing.T) {
 			want: want{
 				code:        http.StatusOK,
 				responseLen: &[]bool{true}[0],
-				contentType: "application/json",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -850,16 +850,11 @@ func TestSetControl(t *testing.T) {
 				require.NoError(t, err)
 			}()
 
-			if strings.Contains(test.want.contentType, "application/json") {
-				var data []domain.ZoneName
-				err = json.Unmarshal(resBody, &data)
-				require.NoError(t, err)
-				if test.want.responseLen != nil {
-					if *test.want.responseLen {
-						assert.Greater(t, len(resBody), 0)
-					} else {
-						assert.Equal(t, len(resBody), 0)
-					}
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
 				}
 			}
 
@@ -948,7 +943,7 @@ func TestDeleteControl(t *testing.T) {
 			want: want{
 				code:        http.StatusOK,
 				responseLen: &[]bool{true}[0],
-				contentType: "application/json",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -1017,16 +1012,212 @@ func TestDeleteControl(t *testing.T) {
 				require.NoError(t, err)
 			}()
 
-			if strings.Contains(test.want.contentType, "application/json") {
-				var data []domain.ZoneName
-				err = json.Unmarshal(resBody, &data)
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}
+
+func TestTrack(t *testing.T) {
+	repo := repository.NewRepository(db, redisCli)
+	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
+	app := fiber.New()
+	app.Use(recover.New())
+
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
+
+	vesselId := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
+	claimsUnknownVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(10000000000)}}
+	jwtUnknownVessel, err := claimsUnknownVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
+	claimsNoVessel := jwt.NewWithClaims(jwt.SigningMethodHS512, struct {
+		jwt.RegisteredClaims
+		Role int64 `json:"role"`
+	}{
+		Role: 1,
+	})
+
+	jwtVesselWhithoutId, err := claimsNoVessel.SigningString()
+	require.NoError(t, err)
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		query   interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Track. No jwt",
+			args: args{
+				method: http.MethodPost,
+				query:  []float64{12.12, 12.12},
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Track. Wrong role in jwt, operator",
+			args: args{
+				method: http.MethodPost,
+				query:  []float64{12.12, 12.12},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Track. OK",
+			args: args{
+				method: http.MethodPost,
+				query:  []float64{12.12, 12.12},
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Track. No track data",
+			args: args{
+				method: http.MethodPost,
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Track. Bad track data",
+			args: args{
+				method: http.MethodPost,
+				query:  []string{"12.12", "12.12"},
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Track. No vessel ids",
+			args: args{
+				method: http.MethodPost,
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVesselWhithoutId,
+				},
+			},
+			want: want{
+				code: http.StatusUnauthorized,
+			},
+		},
+		{
+			name: "Track. NO coordinates",
+			args: args{
+				method: http.MethodPost,
+				query:  []int64{},
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Track. Unknown vessel",
+			args: args{
+				method: http.MethodPost,
+				query:  []float64{12.12, 12.12},
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtUnknownVessel,
+				},
+			},
+			want: want{
+				code: http.StatusNotFound,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bodyJson, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteTrack, bytes.NewReader(bodyJson))
+			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
 				require.NoError(t, err)
-				if test.want.responseLen != nil {
-					if *test.want.responseLen {
-						assert.Greater(t, len(resBody), 0)
-					} else {
-						assert.Equal(t, len(resBody), 0)
-					}
+			}()
+
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
 				}
 			}
 
