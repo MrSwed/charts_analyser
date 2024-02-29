@@ -21,6 +21,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,12 +30,22 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func newEnvConfig() (c *config.Config) {
+type testConfig struct {
+	config.Config
+	jwtOperator string
+	jwtVessel   string
+}
+
+func newEnvConfig() (c *testConfig) {
 	err := godotenv.Load(".env.test")
 	if err != nil {
 		log.Fatal(err)
 	}
-	c = (&config.Config{}).WithEnv().CleanSchemes()
+	c = &testConfig{}
+	c.WithEnv().CleanSchemes()
+	c.jwtOperator = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEwMCIsIm5hbWUiOiJPcGVyYXRvcjEwMCIsInJvbGUiOjJ9.OSc0cSsEvxcz_waNjenJlJiCA9xcIjs1ZvDTi9RNBuKAvD5hBLDvm7XwFCIg9uv-lK-Yxb-62XJuuiNxA0FlcA"
+	c.jwtVessel = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkyMzM0NjYiLCJuYW1lIjoiU2FnYSBWaWtpbmciLCJyb2xlIjoxfQ.7gbx8YufboNZo3uqGXcFRHIIoIWZt8tQdtNFiuun9Z3_e5a9IWOFw88Wx2rQuhkJwgB6SBPvP_rpqqmK36yL0w"
+
 	return
 }
 
@@ -67,24 +78,24 @@ func TestZones(t *testing.T) {
 	app := fiber.New()
 	app.Use(recover.New())
 
-	h := NewHandler(app, s, conf, logger)
-	api := app.Group(constant.RouteApi)
-	api.Get(constant.RouteZones, h.Zones())
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselId := int64(9110913)
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
 	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2020-10-09 00:00:00`)
 	require.NoError(t, err)
-
 	type want struct {
-		code        int
-		responseLen bool
-		contentType string
+		code            int
+		responseLen     bool
+		response        *string
+		responseContain string
+		contentType     string
 	}
 	type args struct {
-		method string
-		query  map[string]interface{}
+		method  string
+		query   map[string]interface{}
+		headers map[string]string
 	}
 	tests := []struct {
 		name string
@@ -92,7 +103,7 @@ func TestZones(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Get vessel 'Federal Saguenay' zones",
+			name: "Get vessel zones. No jwt",
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
@@ -102,13 +113,49 @@ func TestZones(t *testing.T) {
 				},
 			},
 			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Get vessel zones, Wrong role in jwt",
+			args: args{
+				method: http.MethodGet,
+				query: map[string]interface{}{
+					"vesselIDs": []int64{vesselId},
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
+				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Get vessel zones, Operator",
+			args: args{
+				method: http.MethodGet,
+				query: map[string]interface{}{
+					"vesselIDs": []int64{vesselId},
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
+				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
 				code:        http.StatusOK,
 				responseLen: true,
 				contentType: "application/json",
 			},
 		},
 		{
-			name: "Get vessel 'Federal Saguenay' zones (id as string), bad Request",
+			name: "Get vessel zones. Bad vessel ids",
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
@@ -116,13 +163,16 @@ func TestZones(t *testing.T) {
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
 			},
 			want: want{
 				code: http.StatusBadRequest,
 			},
 		},
 		{
-			name: "Get unknown vessels zones",
+			name: "Get vessels zones, unknown",
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
@@ -130,10 +180,13 @@ func TestZones(t *testing.T) {
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
 			},
 			want: want{
 				code:        http.StatusOK,
-				responseLen: false,
+				response:    &[]string{"[]"}[0],
 				contentType: "application/json",
 			},
 		},
@@ -141,17 +194,21 @@ func TestZones(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			bodyJson, _ := json.Marshal(&test.args.query)
+
+			bodyJson, _ := json.Marshal(test.args.query)
 			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteZones, bytes.NewReader(bodyJson))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
 
 			res, err := app.Test(request)
 			var resBody []byte
-
-			require.Equal(t, test.want.code, res.StatusCode)
+			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
 				defer func(Body io.ReadCloser) {
 					err := Body.Close()
@@ -161,16 +218,29 @@ func TestZones(t *testing.T) {
 				require.NoError(t, err)
 			}()
 
-			if test.want.code == http.StatusOK {
+			if strings.Contains(test.want.contentType, "application/json") {
 				var data []domain.ZoneName
 				err = json.Unmarshal(resBody, &data)
 				require.NoError(t, err)
-				require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 				if test.want.responseLen {
 					assert.Greater(t, len(data), 0)
 				} else {
 					assert.Equal(t, len(data), 0)
 				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
 			}
 		})
 	}
@@ -183,9 +253,7 @@ func TestVessels(t *testing.T) {
 	app := fiber.New()
 	app.Use(recover.New())
 
-	h := NewHandler(app, s, conf, logger)
-	api := app.Group(constant.RouteApi)
-	api.Get(constant.RouteVessels, h.Vessels())
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	zoneName := "zone_205"
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
@@ -194,19 +262,38 @@ func TestVessels(t *testing.T) {
 	require.NoError(t, err)
 
 	type want struct {
-		code        int
-		responseLen bool
-		contentType string
+		code            int
+		responseLen     bool
+		response        *string
+		responseContain string
+		contentType     string
 	}
 	type args struct {
-		method string
-		query  map[string]interface{}
+		method  string
+		query   map[string]interface{}
+		headers map[string]string
 	}
 	tests := []struct {
 		name string
 		args args
 		want want
 	}{
+		{
+			name: "Get zone 'zone_205' vessels. No JWT",
+			args: args{
+				method: http.MethodGet,
+				query: map[string]interface{}{
+					"zoneNames": []string{zoneName},
+					"start":     timeStart.Format(time.RFC3339),
+					"finish":    timeEnd.Format(time.RFC3339),
+				},
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
 		{
 			name: "Get zone 'zone_205' vessels",
 			args: args{
@@ -215,6 +302,9 @@ func TestVessels(t *testing.T) {
 					"zoneNames": []string{zoneName},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
+				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
 				},
 			},
 			want: want{
@@ -232,6 +322,9 @@ func TestVessels(t *testing.T) {
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
 			},
 			want: want{
 				code:        http.StatusOK,
@@ -248,6 +341,9 @@ func TestVessels(t *testing.T) {
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
 			},
 			want: want{
 				code: http.StatusBadRequest,
@@ -256,17 +352,21 @@ func TestVessels(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
+
 			bodyJson, _ := json.Marshal(&test.args.query)
 			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteVessels, bytes.NewReader(bodyJson))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
 
 			res, err := app.Test(request)
 			var resBody []byte
-
-			require.Equal(t, test.want.code, res.StatusCode)
+			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
 				defer func(Body io.ReadCloser) {
 					err := Body.Close()
@@ -276,16 +376,29 @@ func TestVessels(t *testing.T) {
 				require.NoError(t, err)
 			}()
 
-			if test.want.code == http.StatusOK {
+			if strings.Contains(test.want.contentType, "application/json") {
 				var data []domain.VesselID
 				err = json.Unmarshal(resBody, &data)
 				require.NoError(t, err)
-				require.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 				if test.want.responseLen {
 					assert.Greater(t, len(data), 0)
 				} else {
 					assert.Equal(t, len(data), 0)
 				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
 			}
 		})
 	}
