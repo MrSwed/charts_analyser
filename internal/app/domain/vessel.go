@@ -27,17 +27,6 @@ func (v VesselID) MarshalBinary() ([]byte, error) {
 
 type VesselIDs []VesselID
 
-//func (v *VesselIDs) IDs() (ids []VesselID) {
-//	ids = make([]VesselID, 0, len(*v))
-//	for _, i := range *v {
-//		if i.ID == 0 {
-//			continue
-//		}
-//		ids = append(ids, i.ID)
-//	}
-//	return
-//}
-
 type VesselName string
 
 func (v *VesselName) String() string {

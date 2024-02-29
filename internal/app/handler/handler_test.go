@@ -1,6 +1,6 @@
 package handler
 
-// to test with real db set env DATABASE_DSN before run with created, but empty tables
+// used  env fo real databases
 
 import (
 	"bytes"
@@ -1237,10 +1237,3 @@ func TestTrack(t *testing.T) {
 		})
 	}
 }
-
-/**/
-/*todo tests
-Track
-*/
-
-/**/

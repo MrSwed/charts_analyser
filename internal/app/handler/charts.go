@@ -25,7 +25,6 @@ import (
 // @Router      /zones [get]
 // @Security    BearerAuth
 func (h *Handler) Zones() fiber.Handler {
-	//
 	return func(c *fiber.Ctx) (err error) {
 		var (
 			query domain.InputVesselsInterval
