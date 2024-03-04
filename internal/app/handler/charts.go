@@ -25,7 +25,6 @@ import (
 // @Router      /zones [get]
 // @Security    BearerAuth
 func (h *Handler) Zones() fiber.Handler {
-	//
 	return func(c *fiber.Ctx) (err error) {
 		var (
 			query domain.InputVesselsInterval
@@ -103,14 +102,9 @@ func (h *Handler) Vessels() fiber.Handler {
 func (h *Handler) Track() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
-			location domain.Point
+			location domain.InputPoint
 			id       = GetVesselId(c)
 		)
-		//err = id.SetFromStr(c.Params("id"))
-		//if err != nil {
-		//	c.Status(http.StatusBadRequest)
-		//	return
-		//}
 		if id == 0 {
 			c.Status(http.StatusForbidden)
 			return nil

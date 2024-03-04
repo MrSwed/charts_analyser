@@ -32,7 +32,7 @@ func (h *Handler) Handler() *Handler {
 
 	monitor := api.Group(constant.RouteMonitor)
 	monitor.Use(opAw)
-	monitor.Get("/state", h.VesselState())
+	monitor.Get(constant.RouteState, h.VesselState())
 	monitor.Get("", h.MonitoredList())
 	monitor.Post("", h.SetControl())
 	monitor.Delete("", h.DelControl())

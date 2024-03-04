@@ -24,7 +24,7 @@ func NewService(r *repository.Repository, log *zap.Logger) *Service {
 type Chart interface {
 	Zones(ctx context.Context, query domain.InputVesselsInterval) (zones []domain.ZoneName, err error)
 	Vessels(ctx context.Context, query domain.InputZones) (vesselIDs []domain.VesselID, err error)
-	Track(ctx context.Context, vesselID domain.VesselID, query domain.Point) (err error)
+	Track(ctx context.Context, vesselID domain.VesselID, loc domain.InputPoint) (err error)
 	MaybeUpdateState(ctx context.Context, vesselId domain.VesselID, track *domain.Track) error
 	GetTrack(ctx context.Context, query domain.InputVesselsInterval) (tracks []domain.Track, err error)
 }

@@ -29,18 +29,24 @@ func (s *ChartService) Vessels(ctx context.Context, query domain.InputZones) (ve
 	return s.r.Chart.Vessels(ctx, query)
 }
 
-func (s *ChartService) Track(ctx context.Context, vesselID domain.VesselID, loc domain.Point) (err error) {
+func (s *ChartService) Track(ctx context.Context, vesselID domain.VesselID, loc domain.InputPoint) (err error) {
 	var (
 		track   = new(domain.Track)
 		vessels domain.Vessels
 	)
-	if loc[0] < constant.GeoAllowedRange[0] || loc[1] < constant.GeoAllowedRange[1] ||
+	if len(loc) != 2 || loc[0] < constant.GeoAllowedRange[0] || loc[1] < constant.GeoAllowedRange[1] ||
 		loc[0] > constant.GeoAllowedRange[2] || loc[1] > constant.GeoAllowedRange[3] {
 		err = myErr.ErrLocationOutOfRange
 		return
 	}
-	track.Location = loc
+	track.Location = domain.Point(loc)
 	vessels, err = s.r.GetVessels(ctx, vesselID)
+	if errors.Is(err, sql.ErrNoRows) || len(vessels) == 0 {
+		err = myErr.ErrNotExist
+	}
+	if err != nil {
+		return
+	}
 	track.Vessel = *vessels[0]
 	if track.Timestamp.IsZero() {
 		track.Timestamp = time.Now()
