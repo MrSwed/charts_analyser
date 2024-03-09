@@ -18,21 +18,6 @@ services:
       start_period: 80s
     networks:
       charts:
-  redis:
-    image: redis:latest
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - /etc/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_DATABASES=${REDIS_DATABASES}
-    healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
-    networks:
-      charts:
   migrate:
     depends_on:
       postgis:
@@ -63,8 +48,6 @@ services:
     environment:
       - DATABASE_DSN=${DATABASE_DSN}
       - ADDRESS=${LISTEN_ADDRESS}
-      - REDIS_ADDRESS=${REDIS_ADDRESS}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     ports:
       - ${LISTEN_PORT}:${LISTEN_PORT}

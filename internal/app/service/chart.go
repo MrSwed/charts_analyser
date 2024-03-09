@@ -9,7 +9,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/Goldziher/go-utils/sliceutils"
-	"github.com/redis/go-redis/v9"
 	"time"
 )
 
@@ -65,34 +64,30 @@ func (s *ChartService) Track(ctx context.Context, vesselID domain.VesselID, loc 
 }
 
 func (s *ChartService) MaybeUpdateState(ctx context.Context, vesselID domain.VesselID, track *domain.Track) (err error) {
-	var control bool
-	if control, err = s.r.IsMonitored(ctx, vesselID); control {
-		var state *domain.VesselState
-
-		if state, err = s.r.GetState(ctx, vesselID); err != nil && !errors.Is(err, redis.Nil) {
-			return err
+	var (
+		states []*domain.VesselState
+		state  *domain.VesselState
+	)
+	if states, err = s.r.GetStates(ctx, vesselID); err != nil || len(states) == 0 || !states[0].State {
+		return
+	}
+	state = states[0]
+	state.Location = &track.Location
+	state.Vessel = track.Vessel
+	state.Timestamp = &track.Timestamp
+	var newZones []domain.ZoneName
+	newZones, err = s.r.Chart.ZonesByLocation(ctx, track.Location)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+	}
+	if state.CurrentZone == nil || len(sliceutils.Difference(state.CurrentZone.Zones, newZones)) > 0 {
+		state.CurrentZone = &domain.CurrentZone{
+			Zones:  newZones,
+			TimeIn: time.Now(),
 		}
-		if state == nil {
-			state = domain.NewVesselState(control)
-		}
-		state.Location = track.Location
-		state.Vessel = track.Vessel
-		state.Timestamp = track.Timestamp
-		var newZones []domain.ZoneName
-		newZones, err = s.r.Chart.ZonesByLocation(ctx, track.Location)
-		if errors.Is(err, sql.ErrNoRows) {
-			err = nil
-		}
-		if len(sliceutils.Difference(state.Zones, newZones)) > 0 {
-			state.CurrentZone = domain.CurrentZone{
-				Zones:  newZones,
-				TimeIn: time.Now(),
-			}
-		}
-		state.ZoneTimeSet()
-		if er := s.r.Monitor.UpdateState(ctx, vesselID, state); err != nil {
-			err = errors.Join(err, er)
-		}
+	}
+	if er := s.r.Monitor.UpdateState(ctx, vesselID, state); err != nil {
+		err = errors.Join(err, er)
 	}
 	return
 }
