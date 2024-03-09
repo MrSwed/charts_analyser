@@ -49,7 +49,7 @@ func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint6
 
 	var stmtTracks, stmtVessels *sqlx.Stmt
 	if stmtTracks, err = tx.PreparexContext(ctx, "INSERT INTO"+" "+DBTracks+
-		" (vessel_id,vessel_name,time,location) VALUES($1, $2, $3, ST_GeometryFromText($4))"); err != nil {
+		" (vessel_id,time,location) VALUES($1, $2, ST_GeometryFromText($3))"); err != nil {
 		return
 	}
 	if stmtVessels, err = tx.PreparexContext(ctx, "INSERT INTO"+" "+DBVessels+
@@ -79,7 +79,7 @@ func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint6
 			err = errors.Join(err, er)
 			continue
 		}
-		if _, er = stmtTracks.ExecContext(ctx, vesselID, vesselName, datetime, coordsStr); er != nil {
+		if _, er = stmtTracks.ExecContext(ctx, vesselID, datetime, coordsStr); er != nil {
 			err = errors.Join(err, er)
 			return
 		}
