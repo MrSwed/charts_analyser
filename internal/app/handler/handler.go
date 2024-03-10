@@ -22,7 +22,7 @@ func NewHandler(app *fiber.App, s *service.Service, conf *config.Config, log *za
 // Handler init routes
 func (h *Handler) Handler() *Handler {
 
-	api := h.app.Group(constant.RouteApi)
+	api := h.app.Group(constant.RouteAPI)
 	api.Use(GetAccessWare(&h.conf.JWT))
 
 	opAw := CheckIsRole(constant.RoleOperator)

@@ -59,8 +59,8 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 	return
 }
 
-func (s *MonitorService) GetStates(ctx context.Context, vesselIds ...domain.VesselID) (states []*domain.VesselState, err error) {
-	states, err = s.r.Monitor.GetStates(ctx, vesselIds...)
+func (s *MonitorService) GetStates(ctx context.Context, vesselIDs ...domain.VesselID) (states []*domain.VesselState, err error) {
+	states, err = s.r.Monitor.GetStates(ctx, vesselIDs...)
 	if len(states) == 0 {
 		states = []*domain.VesselState{}
 		err = myErr.ErrNotExist

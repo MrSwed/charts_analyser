@@ -25,7 +25,7 @@ type Chart interface {
 	Zones(ctx context.Context, query domain.InputVesselsInterval) (zones []domain.ZoneName, err error)
 	Vessels(ctx context.Context, query domain.InputZones) (vesselIDs []domain.VesselID, err error)
 	Track(ctx context.Context, vesselID domain.VesselID, loc domain.InputPoint) (err error)
-	MaybeUpdateState(ctx context.Context, vesselId domain.VesselID, track *domain.Track) error
+	MaybeUpdateState(ctx context.Context, vesselID domain.VesselID, track *domain.Track) error
 	GetTrack(ctx context.Context, query domain.InputVesselsInterval) (tracks []domain.Track, err error)
 }
 
@@ -36,6 +36,6 @@ type Vessel interface {
 
 type Monitor interface {
 	SetControl(ctx context.Context, status bool, vessels ...domain.VesselID) error
-	GetStates(ctx context.Context, vesselId ...domain.VesselID) ([]*domain.VesselState, error)
+	GetStates(ctx context.Context, vesselIDs ...domain.VesselID) ([]*domain.VesselState, error)
 	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
 }

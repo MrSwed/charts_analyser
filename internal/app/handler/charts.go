@@ -103,7 +103,7 @@ func (h *Handler) Track() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
 			location domain.InputPoint
-			id       = GetVesselId(c)
+			id       = GetVesselID(c)
 		)
 		if id == 0 {
 			c.Status(http.StatusForbidden)

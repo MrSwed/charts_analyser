@@ -89,7 +89,7 @@ func (r *MonitorDBCache) GetStates(ctx context.Context, vesselIDs ...domain.Vess
 	return
 }
 
-func (r *MonitorDBCache) UpdateState(ctx context.Context, vesselId domain.VesselID, v *domain.VesselState) (err error) {
+func (r *MonitorDBCache) UpdateState(ctx context.Context, vesselID domain.VesselID, v *domain.VesselState) (err error) {
 	if v == nil {
 		err = errors.New("updateState: input data nil")
 		return
@@ -104,7 +104,7 @@ func (r *MonitorDBCache) UpdateState(ctx context.Context, vesselId domain.Vessel
 			"vessel_id", "state", "timestamp",
 			"control_start", "control_end", "location",
 			"current_zone").
-		Values(vesselId, v.State, v.Timestamp,
+		Values(vesselID, v.State, v.Timestamp,
 			v.ControlStart, v.ControlEnd, v.Location, v.CurrentZone).
 		Suffix("on conflict (vessel_id) do update set state = $2, timestamp = $3, control_start = $4,control_end = $5, location = $6, current_zone = $7").
 		ToSql(); err != nil {

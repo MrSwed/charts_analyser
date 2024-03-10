@@ -40,8 +40,8 @@ type Vessels interface {
 
 type Monitor interface {
 	SetControl(ctx context.Context, status bool, vessels ...*domain.Vessel) error
-	GetStates(ctx context.Context, vesselId ...domain.VesselID) ([]*domain.VesselState, error)
-	UpdateState(ctx context.Context, vesselId domain.VesselID, v *domain.VesselState) error
+	GetStates(ctx context.Context, vesselID ...domain.VesselID) ([]*domain.VesselState, error)
+	UpdateState(ctx context.Context, vesselID domain.VesselID, v *domain.VesselState) error
 	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
 }
 
