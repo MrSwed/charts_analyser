@@ -9,12 +9,10 @@ import (
 	"charts_analyser/internal/app/domain"
 	"charts_analyser/internal/app/repository"
 	"charts_analyser/internal/app/service"
-	"context"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -70,19 +68,8 @@ func newEnvConfig() (c *testConfig) {
 }
 
 var (
-	conf     = newEnvConfig()
-	redisCli = func() *redis.Client {
-		client := redis.NewClient(&redis.Options{
-			Addr:     conf.RedisAddress,
-			Password: conf.RedisPass,
-			DB:       0,
-		})
-		if _, err := client.Ping(context.TODO()).Result(); err != nil {
-			log.Fatal("cannot connect redis", err)
-		}
-		return client
-	}()
-	db = func() *sqlx.DB {
+	conf = newEnvConfig()
+	db   = func() *sqlx.DB {
 		db, err := sqlx.Connect("postgres", conf.DatabaseDSN)
 		if err != nil {
 			log.Fatal(err)
@@ -92,7 +79,7 @@ var (
 )
 
 func TestZones(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -100,14 +87,14 @@ func TestZones(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselId := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
-	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2020-10-09 00:00:00`)
+	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2017-01-09 00:00:00`)
 	require.NoError(t, err)
 	type want struct {
 		code            int
@@ -131,7 +118,7 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
-					"vesselIDs": []int64{vesselId},
+					"vesselIDs": []int64{vesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -147,7 +134,7 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
-					"vesselIDs": []int64{vesselId},
+					"vesselIDs": []int64{vesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -164,7 +151,7 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
-					"vesselIDs": []int64{vesselId},
+					"vesselIDs": []int64{vesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -183,7 +170,7 @@ func TestZones(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				query: map[string]interface{}{
-					"vesselIDs": []string{strconv.FormatInt(vesselId, 10)},
+					"vesselIDs": []string{strconv.FormatInt(vesselID, 10)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -217,10 +204,11 @@ func TestZones(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJson, _ := json.Marshal(test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteZones, bytes.NewReader(bodyJson))
+			bodyJSON, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteZones, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -231,6 +219,8 @@ func TestZones(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
@@ -273,7 +263,7 @@ func TestZones(t *testing.T) {
 }
 
 func TestVessels(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -284,7 +274,7 @@ func TestVessels(t *testing.T) {
 	zoneName := "zone_205"
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
-	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2020-10-09 00:00:00`)
+	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2017-01-09 00:00:00`)
 	require.NoError(t, err)
 
 	type want struct {
@@ -377,10 +367,11 @@ func TestVessels(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJson, _ := json.Marshal(&test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteVessels, bytes.NewReader(bodyJson))
+			bodyJSON, _ := json.Marshal(&test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -391,6 +382,8 @@ func TestVessels(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
@@ -433,7 +426,7 @@ func TestVessels(t *testing.T) {
 }
 
 func TestVesselState(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -441,8 +434,8 @@ func TestVesselState(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselId := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -467,7 +460,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. No jwt",
 			args: args{
 				method: http.MethodGet,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -479,7 +472,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. Wrong role in jwt",
 			args: args{
 				method: http.MethodGet,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + jwtVessel,
 				},
@@ -492,7 +485,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. Operator",
 			args: args{
 				method: http.MethodGet,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -507,7 +500,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. Bad vessel ids",
 			args: args{
 				method: http.MethodGet,
-				query:  []string{strconv.FormatInt(vesselId, 10)},
+				query:  []string{strconv.FormatInt(vesselID, 10)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -534,10 +527,11 @@ func TestVesselState(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJson, _ := json.Marshal(test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteMonitor+constant.RouteState, bytes.NewReader(bodyJson))
+			bodyJSON, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteMonitor+constant.RouteState, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -548,6 +542,8 @@ func TestVesselState(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
@@ -590,7 +586,7 @@ func TestVesselState(t *testing.T) {
 }
 
 func TestMonitoredList(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -598,8 +594,8 @@ func TestMonitoredList(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselId := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -659,9 +655,10 @@ func TestMonitoredList(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteMonitor, nil)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteMonitor, nil)
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -672,6 +669,8 @@ func TestMonitoredList(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
@@ -714,7 +713,7 @@ func TestMonitoredList(t *testing.T) {
 }
 
 func TestSetControl(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -722,8 +721,8 @@ func TestSetControl(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselId := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -748,7 +747,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. No jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -760,7 +759,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Wrong role in jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + jwtVessel,
 				},
@@ -773,7 +772,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Operator",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -788,7 +787,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Bad vessel ids",
 			args: args{
 				method: http.MethodPost,
-				query:  []string{strconv.FormatInt(vesselId, 10)},
+				query:  []string{strconv.FormatInt(vesselID, 10)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -825,10 +824,11 @@ func TestSetControl(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJson, _ := json.Marshal(test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteMonitor, bytes.NewReader(bodyJson))
+			bodyJSON, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteMonitor, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -839,6 +839,8 @@ func TestSetControl(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
@@ -876,7 +878,7 @@ func TestSetControl(t *testing.T) {
 }
 
 func TestDeleteControl(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -884,8 +886,8 @@ func TestDeleteControl(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselId := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -910,7 +912,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Set control. No jwt",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -922,7 +924,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Wrong role in jwt",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + jwtVessel,
 				},
@@ -935,7 +937,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Operator",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{vesselId},
+				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -950,7 +952,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Bad vessel ids",
 			args: args{
 				method: http.MethodDelete,
-				query:  []string{strconv.FormatInt(vesselId, 10)},
+				query:  []string{strconv.FormatInt(vesselID, 10)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -987,10 +989,11 @@ func TestDeleteControl(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJson, _ := json.Marshal(test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteMonitor, bytes.NewReader(bodyJson))
+			bodyJSON, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteMonitor, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -1001,6 +1004,8 @@ func TestDeleteControl(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {
@@ -1038,7 +1043,7 @@ func TestDeleteControl(t *testing.T) {
 }
 
 func TestTrack(t *testing.T) {
-	repo := repository.NewRepository(db, redisCli)
+	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
 	app := fiber.New()
@@ -1046,8 +1051,8 @@ func TestTrack(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselId := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselId)}}
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1062,7 +1067,7 @@ func TestTrack(t *testing.T) {
 		Role: 1,
 	})
 
-	jwtVesselWhithoutId, err := claimsNoVessel.SigningString()
+	jetVesselWithoutID, err := claimsNoVessel.SigningString()
 	require.NoError(t, err)
 
 	type want struct {
@@ -1152,7 +1157,7 @@ func TestTrack(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVesselWhithoutId,
+					"Authorization": "Bearer " + jetVesselWithoutID,
 				},
 			},
 			want: want{
@@ -1188,10 +1193,11 @@ func TestTrack(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJson, _ := json.Marshal(test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteApi+constant.RouteTrack, bytes.NewReader(bodyJson))
+			bodyJSON, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteTrack, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -1202,6 +1208,8 @@ func TestTrack(t *testing.T) {
 			}
 
 			res, err := app.Test(request)
+			require.NoError(t, err)
+
 			var resBody []byte
 			assert.Equal(t, test.want.code, res.StatusCode)
 			func() {

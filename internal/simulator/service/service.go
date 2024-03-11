@@ -58,7 +58,7 @@ func (s *Service) SimulateVessel(ctx context.Context, vessel *domain.VesselItem)
 	s.SetControl(ctx, vessel.ID)
 
 	vessel.TrackAdd(tracks...)
-	simulateSt := domain.HistoryDate(tracks[0].Timestamp)
+	var simulateSt domain.HistoryDate
 
 	var nextTime = time.Second * time.Duration(s.c.TrackInterval)
 	if nextTime == 0 {

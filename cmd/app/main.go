@@ -15,7 +15,6 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -54,17 +53,6 @@ func runServer(ctx context.Context) {
 	if db, err = sqlx.Connect("pgx", conf.DatabaseDSN); err != nil {
 		logger.Fatal("cannot connect db", zap.Error(err))
 	}
-	redisCli := func() *redis.Client {
-		client := redis.NewClient(&redis.Options{
-			Addr:     conf.RedisAddress,
-			Password: conf.RedisPass,
-			DB:       0,
-		})
-		if _, err = client.Ping(ctx).Result(); err != nil {
-			logger.Fatal("cannot connect redis", zap.Error(err))
-		}
-		return client
-	}()
 
 	app := fiber.New()
 	app.Use(fiberLog.New(fiberLog.Config{
@@ -78,7 +66,7 @@ func runServer(ctx context.Context) {
 		//MaxAge:           defaultCorsMaxAge,
 	}))
 
-	r := repository.NewRepository(db, redisCli)
+	r := repository.NewRepository(db)
 	s := service.NewService(r, logger)
 	handler.NewHandler(app, s, conf, logger).Handler()
 
@@ -92,13 +80,6 @@ func runServer(ctx context.Context) {
 	graceShutdown.Add("DB", func(ctx context.Context) (err error) {
 		if err = db.Close(); err == nil {
 			logger.Info("Db Closed")
-		}
-		return
-	})
-
-	graceShutdown.Add("Redis", func(ctx context.Context) (err error) {
-		if err = redisCli.Close(); err == nil {
-			logger.Info("Redis Closed")
 		}
 		return
 	})

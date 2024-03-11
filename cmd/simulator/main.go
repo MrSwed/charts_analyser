@@ -50,7 +50,7 @@ func main() {
 		logger.Fatal("Build operator jwt", zap.Error(err))
 	}
 
-	r := repository.NewRepository(db, nil)
+	r := repository.NewRepository(db)
 	s := service.NewService(r, conf, logger)
 	vessels, err := s.Vessels.GetRandomVessels(ctx, conf.VesselCount)
 	if err != nil {

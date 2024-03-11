@@ -7,7 +7,6 @@ import (
 	"context"
 	sqrl "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 )
 
 var sq = sqrl.StatementBuilder.PlaceholderFormat(sqrl.Dollar)
@@ -17,7 +16,7 @@ type Repository struct {
 	Vessels
 }
 
-func NewRepository(db *sqlx.DB, rds *redis.Client) *Repository {
+func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
 		Chart:   NewChartRepository(db),
 		Vessels: NewVesselRepository(db),

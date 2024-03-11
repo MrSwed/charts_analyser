@@ -8,7 +8,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"time"
 )
@@ -22,17 +21,7 @@ type MonitorService struct {
 	log *zap.Logger
 }
 
-func (s *MonitorService) IsMonitored(ctx context.Context, vesselId domain.VesselID) (state bool, err error) {
-	return s.r.Monitor.IsMonitored(ctx, vesselId)
-}
 func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs ...domain.VesselID) (err error) {
-	/* todo: create new one automatically ? * /
-	if vessel.ID == 0 && len([]rune(vessel.Name)) > 0 {
-		vessel.ID, err = s.r.AddVessel(ctx, domain.InputVessel{
-			VesselName: vessel.Name,
-		})
-	}
-	/**/
 	var vessels domain.Vessels
 	if vessels, err = s.r.Vessels.GetVessels(ctx, vesselIDs...); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -48,29 +37,6 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 	if err != nil {
 		return
 	}
-	// update monitoring status
-	go func(status bool, vesselIDs ...domain.VesselID) {
-		ctx, cancel := context.WithTimeout(context.Background(), constant.ServerOperationTimeout)
-		defer cancel()
-
-		states, err := s.GetStates(ctx, vesselIDs...)
-		if len(states) == 0 && err != nil && !errors.Is(err, myErr.ErrNotExist) {
-			s.log.Error("Background GetStates for update control", zap.Error(err))
-			return
-		}
-		for _, st := range states {
-			st.Control.State = status
-			if !status {
-				st.Control.ControlEnd = &[]time.Time{time.Now()}[0]
-			} else {
-				st.Control.ControlStart = &[]time.Time{time.Now()}[0]
-				st.Control.ControlEnd = nil
-			}
-			if err = s.r.UpdateState(ctx, st.Vessel.ID, st); err != nil {
-				s.log.Error("Background UpdateState", zap.Error(err))
-			}
-		}
-	}(status, vesselIDs...)
 
 	/* log to postgres */
 	go func(vessels domain.Vessels, status bool) {
@@ -93,15 +59,8 @@ func (s *MonitorService) SetControl(ctx context.Context, status bool, vesselIDs 
 	return
 }
 
-func (s *MonitorService) GetStates(ctx context.Context, vesselIds ...domain.VesselID) (states []*domain.VesselState, err error) {
-	for _, vesselId := range vesselIds {
-		state, er := s.r.Monitor.GetState(ctx, vesselId)
-		if er != nil && !errors.Is(er, redis.Nil) {
-			err = errors.Join(err, er)
-		} else if state != nil {
-			states = append(states, state)
-		}
-	}
+func (s *MonitorService) GetStates(ctx context.Context, vesselIDs ...domain.VesselID) (states []*domain.VesselState, err error) {
+	states, err = s.r.Monitor.GetStates(ctx, vesselIDs...)
 	if len(states) == 0 {
 		states = []*domain.VesselState{}
 		err = myErr.ErrNotExist

@@ -34,7 +34,7 @@ func CheckIsRole(expRole constant.Role) fiber.Handler {
 	}
 }
 
-func GetVesselId(c *fiber.Ctx) (id domain.VesselID) {
+func GetVesselID(c *fiber.Ctx) (id domain.VesselID) {
 	claims := GetTokenClaims(c)
 	if role(claims).CheckIsRole(constant.RoleVessel) {
 		switch cl := claims["id"].(type) {

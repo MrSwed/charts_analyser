@@ -2,7 +2,7 @@ package constant
 
 const (
 	RouteID      = "/:id"
-	RouteApi     = "/api"
+	RouteAPI     = "/api"
 	RouteVessels = "/vessels"
 	RouteZones   = "/zones"
 	RouteMonitor = "/monitor"

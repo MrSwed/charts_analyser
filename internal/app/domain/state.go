@@ -3,6 +3,7 @@ package domain
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -25,35 +26,7 @@ type CurrentZone struct {
 	TimeIn time.Time  `json:"timeIn" db:"time_in"`
 }
 
-func (v CurrentZone) MarshalBinary() ([]byte, error) {
-	return json.Marshal(v)
-}
-
-type VesselState struct {
-	Control
-	Vessel       Vessel    `json:"vessel"`
-	Timestamp    time.Time `json:"timestamp"`
-	Location     Point     `json:"location"`
-	CurrentZone  `json:"currentZone"`
-	ZoneDuration string `json:"zoneDuration"`
-}
-
-func NewVesselState(control bool) *VesselState {
-	if control {
-		return &VesselState{
-			Control: Control{
-				State:        control,
-				ControlStart: &[]time.Time{time.Now()}[0]},
-		}
-	}
-	return &VesselState{}
-}
-
-func (v VesselState) MarshalBinary() ([]byte, error) {
-	v.ZoneTimeSet()
-	return json.Marshal(v)
-}
-func (v VesselState) Value() (driver.Value, error) {
+func (v CurrentZone) Value() (driver.Value, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
@@ -61,7 +34,7 @@ func (v VesselState) Value() (driver.Value, error) {
 	return b, nil
 }
 
-func (v *VesselState) Scan(src interface{}) error {
+func (v *CurrentZone) Scan(src interface{}) error {
 	var source []byte
 	if reflect.ValueOf(src).Kind() == reflect.String {
 		source = []byte(src.(string))
@@ -72,24 +45,47 @@ func (v *VesselState) Scan(src interface{}) error {
 	if err != nil {
 		return err
 	}
-	v.ZoneTimeSet()
 	return nil
 }
 
-func (v *VesselState) SetFromMap(m map[string]string) (err error) {
-	// refactor to key-to-key if it will be slow
-	var b []byte
-	if b, err = json.Marshal(m); err != nil {
-		return
+type VesselState struct {
+	Control
+	Vessel
+	Timestamp    *time.Time   `json:"timestamp" db:"timestamp"`
+	Location     *Point       `json:"location" db:"location"`
+	CurrentZone  *CurrentZone `json:"currentZone" db:"current_zone"`
+	ZoneDuration *Duration    `json:"zoneDuration" db:"zone_duration"`
+}
+type Duration time.Duration
+
+func (d *Duration) Scan(raw interface{}) error {
+	if raw == nil {
+		return nil
 	}
-	err = json.Unmarshal(b, &v)
-	return
+	switch v := raw.(type) {
+	case string:
+		vv, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return err
+		}
+		*d = Duration(time.Duration(vv) * time.Second)
+	case float64:
+		*d = Duration(time.Duration(v) * time.Second)
+	case int64:
+		*d = Duration(time.Duration(v) * time.Second)
+	default:
+		return fmt.Errorf("cannot sql.Scan() strfmt.Duration from: %#v", v)
+	}
+
+	return nil
 }
 
-func (v *VesselState) ZoneTimeSet() {
-	if v.Timestamp.After(v.CurrentZone.TimeIn) {
-		v.ZoneDuration = v.Timestamp.Sub(v.CurrentZone.TimeIn).String()
-	}
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d Duration) MarshalJSON() (b []byte, err error) {
+	return json.Marshal(d.String())
 }
 
 // Point 	(0 - lon, 1 - ltd)
@@ -103,6 +99,9 @@ func (v Point) Value() (driver.Value, error) {
 }
 
 func (v *Point) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	var source []byte
 	if reflect.ValueOf(src).Kind() == reflect.String {
 		source = []byte(src.(string))
@@ -114,8 +113,4 @@ func (v *Point) Scan(src interface{}) error {
 		return err
 	}
 	return nil
-}
-
-func (v Point) MarshalBinary() ([]byte, error) {
-	return json.Marshal(v)
 }

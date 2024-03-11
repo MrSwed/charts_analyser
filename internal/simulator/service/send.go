@@ -55,8 +55,6 @@ func (s *RequestService) SendTrack(ctx context.Context, vesselID appDomain.Vesse
 	}
 	s.l.Info("SendTrack done", zap.Any("data", []interface{}{
 		req.URL.String(), string(body), req.Method, res.StatusCode, string(resultBody)}))
-
-	return
 }
 
 func (s *RequestService) SetControl(ctx context.Context, vesselID appDomain.VesselID) {
@@ -93,6 +91,4 @@ func (s *RequestService) SetControl(ctx context.Context, vesselID appDomain.Vess
 	}
 	s.l.Info("SetControl done", zap.Any("data", []interface{}{
 		req.URL.String(), req.Method, res.StatusCode, string(resultBody)}))
-
-	return
 }

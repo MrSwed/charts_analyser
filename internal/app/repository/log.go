@@ -35,7 +35,7 @@ func (r *LogRepo) ControlLogAdd(ctx context.Context, logs ...domain.ControlLog) 
 
 	var stmt *sqlx.Stmt
 	if stmt, err = tx.PreparexContext(ctx, "INSERT INTO"+" "+constant.DBControlLog+
-		" (vessel_id, vessel_name, timestamp, control, comment) VALUES($1, $2, $3, $4, $5)"); err != nil {
+		" (vessel_id, timestamp, control, comment) VALUES($1, $2, $3, $4)"); err != nil {
 		return
 	}
 
@@ -44,7 +44,7 @@ func (r *LogRepo) ControlLogAdd(ctx context.Context, logs ...domain.ControlLog) 
 			log.Timestamp = time.Now()
 		}
 		if _, err = stmt.ExecContext(ctx,
-			log.Vessel.ID, log.Vessel.Name, log.Timestamp, log.Control, log.Comment); err != nil {
+			log.Vessel.ID, log.Timestamp, log.Control, log.Comment); err != nil {
 			return
 		}
 	}

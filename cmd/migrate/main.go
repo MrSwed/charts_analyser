@@ -17,7 +17,7 @@ func main() {
 	var (
 		db      *sqlx.DB
 		err     error
-		isNewDB = false
+		isNewDB bool
 		wg      sync.WaitGroup
 	)
 	conf := NewConfig().Init()

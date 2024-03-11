@@ -5,7 +5,6 @@ import (
 	"context"
 	sqrl "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 )
 
 var sq = sqrl.StatementBuilder.PlaceholderFormat(sqrl.Dollar)
@@ -17,10 +16,10 @@ type Repository struct {
 	Log
 }
 
-func NewRepository(db *sqlx.DB, rds *redis.Client) *Repository {
+func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
 		Chart:   NewChartRepository(db),
-		Monitor: NewMonitorRepository(rds),
+		Monitor: NewMonitorDBRepository(db),
 		Vessels: NewVesselRepository(db),
 		Log:     NewLogRepository(db),
 	}
@@ -40,10 +39,9 @@ type Vessels interface {
 }
 
 type Monitor interface {
-	IsMonitored(ctx context.Context, vesselId domain.VesselID) (bool, error)
 	SetControl(ctx context.Context, status bool, vessels ...*domain.Vessel) error
-	GetState(ctx context.Context, vesselId domain.VesselID) (*domain.VesselState, error)
-	UpdateState(ctx context.Context, vesselId domain.VesselID, v *domain.VesselState) error
+	GetStates(ctx context.Context, vesselID ...domain.VesselID) ([]*domain.VesselState, error)
+	UpdateState(ctx context.Context, vesselID domain.VesselID, v *domain.VesselState) error
 	MonitoredVessels(ctx context.Context) (domain.Vessels, error)
 }
 

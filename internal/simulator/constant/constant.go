@@ -19,6 +19,12 @@ const (
 
 	JWTSigningKey = "JWTSigningKeyDefaultString"
 
-	CtxValueKeyJWTOperator = "jwt_operator"
-	CtxValueKeyJWTVessel   = "jwt_vessel"
+	CtxValueKeyJWTOperator CtxKey = "jwt_operator"
+	CtxValueKeyJWTVessel   CtxKey = "jwt_vessel"
 )
+
+type CtxKey string
+
+func (c CtxKey) String() string {
+	return string(c)
+}
