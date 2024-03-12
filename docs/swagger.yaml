@@ -1,5 +1,18 @@
 basePath: /api/
 definitions:
+  charts_analyser_internal_app_domain.Track:
+    properties:
+      id:
+        type: integer
+      location:
+        items:
+          type: number
+        type: array
+      name:
+        type: string
+      timestamp:
+        type: string
+    type: object
   domain.CurrentZone:
     properties:
       timeIn:
@@ -9,6 +22,26 @@ definitions:
           type: string
         type: array
     type: object
+  domain.Duration:
+    enum:
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    type: integer
+    x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
   domain.InputVesselsInterval:
     properties:
       finish:
@@ -48,16 +81,18 @@ definitions:
         type: string
       currentZone:
         $ref: '#/definitions/domain.CurrentZone'
+      id:
+        type: integer
       location:
         items:
           type: number
         type: array
+      name:
+        type: string
       timestamp:
         type: string
-      vessel:
-        $ref: '#/definitions/domain.Vessel'
       zoneDuration:
-        type: string
+        $ref: '#/definitions/domain.Duration'
     type: object
 host: localhost:3000
 info:
@@ -65,19 +100,28 @@ info:
   title: 'Charts analyser: web-service API'
   version: "1.0"
 paths:
-  /monitor/:
+  /chart/vessels:
     get:
       consumes:
       - application/json
-      description: поставленных на мониторинг
+      description: которые пересекали указанные морские карты в заданный временной
+        промежуток.
+      parameters:
+      - description: 'Входные параметры: идентификаторы карт, стартовая дата, конечная
+          дата.'
+        in: body
+        name: InputZones
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputZones'
       produces:
       - application/json
       responses:
         "200":
-          description: Ok
+          description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.Vessel'
+              type: integer
             type: array
         "400":
           description: Bad Request
@@ -85,38 +129,42 @@ paths:
           description: Internal Server Error
       security:
       - BearerAuth: []
-      summary: Список судов
+      summary: список судов
       tags:
-      - MonitoredList
-    post:
+      - Chart
+  /chart/zones:
+    get:
       consumes:
       - application/json
+      description: которые пересекались заданными в запросе судами в заданный временной
+        промежуток.
       parameters:
-      - description: список ID Судов
+      - description: 'Входные параметры: идентификаторы судов, стартовая дата, конечная
+          дата.'
         in: body
-        name: VesselIDs
+        name: InputVesselsInterval
         required: true
         schema:
-          items:
-            type: integer
-          type: array
+          $ref: '#/definitions/domain.InputVesselsInterval'
       produces:
       - application/json
       responses:
         "200":
-          description: Ok
+          description: OK
           schema:
-            type: string
+            items:
+              type: string
+            type: array
         "400":
           description: Bad Request
         "500":
           description: Internal Server Error
       security:
       - BearerAuth: []
-      summary: Поставить судно на контроль
+      summary: список морских карт
       tags:
-      - SetControl
-  /monitor/{id}:
+      - Chart
+  /monitor:
     delete:
       consumes:
       - application/json
@@ -144,7 +192,57 @@ paths:
       - BearerAuth: []
       summary: Снять судно с контроля
       tags:
-      - DelControl
+      - Monitor
+    get:
+      consumes:
+      - application/json
+      description: поставленных на мониторинг
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Список судов
+      tags:
+      - Monitor
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Поставить судно на контроль
+      tags:
+      - Monitor
   /monitor/state:
     get:
       consumes:
@@ -178,8 +276,8 @@ paths:
       - BearerAuth: []
       summary: Текущие данные
       tags:
-      - VesselState
-  /track/:
+      - Monitor
+  /track:
     post:
       consumes:
       - application/json
@@ -234,9 +332,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: Ok
+          description: OK
           schema:
-            type: string
+            items:
+              $ref: '#/definitions/charts_analyser_internal_app_domain.Track'
+            type: array
         "400":
           description: Bad Request
         "500":
@@ -245,71 +345,7 @@ paths:
       - BearerAuth: []
       summary: Маршрут судна за указанный период
       tags:
-      - GetTrack
-  /vessel:
-    get:
-      consumes:
-      - application/json
-      description: которые пересекали указанные морские карты в заданный временной
-        промежуток.
-      parameters:
-      - description: 'Входные параметры: идентификаторы карт, стартовая дата, конечная
-          дата.'
-        in: body
-        name: InputZones
-        required: true
-        schema:
-          $ref: '#/definitions/domain.InputZones'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: integer
-            type: array
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-      security:
-      - BearerAuth: []
-      summary: список судов
-      tags:
-      - Chart
-  /zones:
-    get:
-      consumes:
-      - application/json
-      description: которые пересекались заданными в запросе судами в заданный временной
-        промежуток.
-      parameters:
-      - description: 'Входные параметры: идентификаторы судов, стартовая дата, конечная
-          дата.'
-        in: body
-        name: InputVesselsInterval
-        required: true
-        schema:
-          $ref: '#/definitions/domain.InputVesselsInterval'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: string
-            type: array
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-      security:
-      - BearerAuth: []
-      summary: список морских карт
-      tags:
-      - Chart
+      - Track
 securityDefinitions:
   BearerAuth:
     description: Insert your access token default (Bearer access_token_here)

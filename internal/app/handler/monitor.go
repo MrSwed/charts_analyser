@@ -13,7 +13,7 @@ import (
 )
 
 // MonitoredList
-// @Tags        MonitoredList
+// @Tags        Monitor
 // @Summary     Список судов
 // @Description поставленных на мониторинг
 // @Accept      json
@@ -21,7 +21,7 @@ import (
 // @Success     200         {object} []domain.Vessel "Ok"
 // @Failure     400
 // @Failure     500
-// @Router      /monitor/ [get]
+// @Router      /monitor [get]
 // @Security    BearerAuth
 func (h *Handler) MonitoredList() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
@@ -39,7 +39,7 @@ func (h *Handler) MonitoredList() fiber.Handler {
 }
 
 // VesselState
-// @Tags        VesselState
+// @Tags        Monitor
 // @Summary     Текущие данные
 // @Description для выбранных судов, стоящих на мониторинге
 // @Accept      json
@@ -91,7 +91,7 @@ func (h *Handler) VesselState() fiber.Handler {
 }
 
 // SetControl
-// @Tags        SetControl
+// @Tags        Monitor
 // @Summary     Поставить судно на контроль
 // @Description
 // на мониторинг (снять с мониторинга)
@@ -101,7 +101,7 @@ func (h *Handler) VesselState() fiber.Handler {
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
-// @Router      /monitor/ [post]
+// @Router      /monitor [post]
 // @Security    BearerAuth
 func (h *Handler) SetControl() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
@@ -147,7 +147,7 @@ func (h *Handler) SetControl() fiber.Handler {
 }
 
 // DelControl
-// @Tags        DelControl
+// @Tags        Monitor
 // @Summary     Снять судно с контроля
 // @Description
 // @Accept      json
@@ -156,7 +156,7 @@ func (h *Handler) SetControl() fiber.Handler {
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
-// @Router      /monitor/{id} [delete]
+// @Router      /monitor [delete]
 // @Security    BearerAuth
 func (h *Handler) DelControl() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {

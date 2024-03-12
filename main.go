@@ -1,6 +1,6 @@
 package main
 
-//go:generate swag init
+//go:generate swag init --parseDependency --parseInternal
 
 import (
 	_ "charts_analyser/docs"

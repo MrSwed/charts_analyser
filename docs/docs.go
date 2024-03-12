@@ -15,7 +15,103 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/monitor/": {
+        "/chart/vessels": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "которые пересекали указанные морские карты в заданный временной промежуток.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chart"
+                ],
+                "summary": "список судов",
+                "parameters": [
+                    {
+                        "description": "Входные параметры: идентификаторы карт, стартовая дата, конечная дата.",
+                        "name": "InputZones",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputZones"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/chart/zones": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "которые пересекались заданными в запросе судами в заданный временной промежуток.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chart"
+                ],
+                "summary": "список морских карт",
+                "parameters": [
+                    {
+                        "description": "Входные параметры: идентификаторы судов, стартовая дата, конечная дата.",
+                        "name": "InputVesselsInterval",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.InputVesselsInterval"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/monitor": {
             "get": {
                 "security": [
                     {
@@ -30,7 +126,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "MonitoredList"
+                    "Monitor"
                 ],
                 "summary": "Список судов",
                 "responses": {
@@ -64,9 +160,54 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SetControl"
+                    "Monitor"
                 ],
                 "summary": "Поставить судно на контроль",
+                "parameters": [
+                    {
+                        "description": "список ID Судов",
+                        "name": "VesselIDs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Monitor"
+                ],
+                "summary": "Снять судно с контроля",
                 "parameters": [
                     {
                         "description": "список ID Судов",
@@ -112,7 +253,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "VesselState"
+                    "Monitor"
                 ],
                 "summary": "Текущие данные",
                 "parameters": [
@@ -151,54 +292,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/monitor/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DelControl"
-                ],
-                "summary": "Снять судно с контроля",
-                "parameters": [
-                    {
-                        "description": "список ID Судов",
-                        "name": "VesselIDs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/track/": {
+        "/track": {
             "post": {
                 "security": [
                     {
@@ -266,7 +360,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "GetTrack"
+                    "Track"
                 ],
                 "summary": "Маршрут судна за указанный период",
                 "parameters": [
@@ -290,104 +384,11 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/vessel": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "которые пересекали указанные морские карты в заданный временной промежуток.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chart"
-                ],
-                "summary": "список судов",
-                "parameters": [
-                    {
-                        "description": "Входные параметры: идентификаторы карт, стартовая дата, конечная дата.",
-                        "name": "InputZones",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.InputZones"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/zones": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "которые пересекались заданными в запросе судами в заданный временной промежуток.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chart"
-                ],
-                "summary": "список морских карт",
-                "parameters": [
-                    {
-                        "description": "Входные параметры: идентификаторы судов, стартовая дата, конечная дата.",
-                        "name": "InputVesselsInterval",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.InputVesselsInterval"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
+                                "$ref": "#/definitions/charts_analyser_internal_app_domain.Track"
                             }
                         }
                     },
@@ -402,6 +403,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "charts_analyser_internal_app_domain.Track": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.CurrentZone": {
             "type": "object",
             "properties": {
@@ -415,6 +436,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "domain.Duration": {
+            "type": "integer",
+            "enum": [
+                -9223372036854775808,
+                9223372036854775807,
+                1,
+                1000,
+                1000000,
+                1000000000,
+                60000000000,
+                3600000000000
+            ],
+            "x-enum-varnames": [
+                "minDuration",
+                "maxDuration",
+                "Nanosecond",
+                "Microsecond",
+                "Millisecond",
+                "Second",
+                "Minute",
+                "Hour"
+            ]
         },
         "domain.InputVesselsInterval": {
             "type": "object",
@@ -476,20 +520,23 @@ const docTemplate = `{
                 "currentZone": {
                     "$ref": "#/definitions/domain.CurrentZone"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "location": {
                     "type": "array",
                     "items": {
                         "type": "number"
                     }
                 },
+                "name": {
+                    "type": "string"
+                },
                 "timestamp": {
                     "type": "string"
                 },
-                "vessel": {
-                    "$ref": "#/definitions/domain.Vessel"
-                },
                 "zoneDuration": {
-                    "type": "string"
+                    "$ref": "#/definitions/domain.Duration"
                 }
             }
         }

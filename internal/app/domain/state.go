@@ -56,6 +56,7 @@ type VesselState struct {
 	CurrentZone  *CurrentZone `json:"currentZone" db:"current_zone"`
 	ZoneDuration *Duration    `json:"zoneDuration" db:"zone_duration"`
 }
+
 type Duration time.Duration
 
 func (d *Duration) Scan(raw interface{}) error {

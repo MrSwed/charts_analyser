@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-// Zones
+// ChartZones
 // @Tags        Chart
 // @Summary     список морских карт
 // @Description которые пересекались заданными в запросе судами в заданный временной промежуток.
@@ -22,9 +22,9 @@ import (
 // @Success     200         {object} []string
 // @Failure     400
 // @Failure     500
-// @Router      /zones [get]
+// @Router      /chart/zones [get]
 // @Security    BearerAuth
-func (h *Handler) Zones() fiber.Handler {
+func (h *Handler) ChartZones() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
 			query domain.InputVesselsInterval
@@ -48,7 +48,7 @@ func (h *Handler) Zones() fiber.Handler {
 	}
 }
 
-// Vessels
+// ChartVessels
 // @Tags        Chart
 // @Summary     список судов
 // @Description которые пересекали указанные морские карты в заданный временной промежуток.
@@ -58,9 +58,9 @@ func (h *Handler) Zones() fiber.Handler {
 // @Success     200         {object} []uint64
 // @Failure     400
 // @Failure     500
-// @Router      /vessel [get]
+// @Router      /chart/vessels [get]
 // @Security    BearerAuth
-func (h *Handler) Vessels() fiber.Handler {
+func (h *Handler) ChartVessels() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
 			query domain.InputZones
@@ -97,7 +97,7 @@ func (h *Handler) Vessels() fiber.Handler {
 // @Success     200         {string} string "Ok"
 // @Failure     400
 // @Failure     500
-// @Router      /track/ [post]
+// @Router      /track [post]
 // @Security    BearerAuth
 func (h *Handler) Track() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
@@ -136,14 +136,14 @@ func (h *Handler) Track() fiber.Handler {
 }
 
 // GetTrack
-// @Tags        GetTrack
+// @Tags        Track
 // @Summary     Маршрут судна за указанный период
 // @Description
 // @Accept      json
 // @Param       id            path      uint64               true  "ID Судна "
 // @Param       DateInterval  query     domain.DateInterval  true  "Входные параметры: стартовая дата, конечная дата."
 // @Produce     json
-// @Success     200          {string} string "Ok"
+// @Success     200          {object} []domain.Track
 // @Failure     400
 // @Failure     500
 // @Router      /track/{id} [post]

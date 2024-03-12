@@ -27,8 +27,11 @@ func (h *Handler) Handler() *Handler {
 
 	opAw := CheckIsRole(constant.RoleOperator)
 	veAw := CheckIsRole(constant.RoleVessel)
-	api.Get(constant.RouteZones, opAw, h.Zones())
-	api.Get(constant.RouteVessels, opAw, h.Vessels())
+
+	chart := api.Group(constant.RouteChart)
+	chart.Use(opAw)
+	chart.Get(constant.RouteZones, h.ChartZones())
+	chart.Get(constant.RouteVessels, h.ChartVessels())
 
 	monitor := api.Group(constant.RouteMonitor)
 	monitor.Use(opAw)
