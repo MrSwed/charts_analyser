@@ -346,6 +346,129 @@ paths:
       summary: Маршрут судна за указанный период
       tags:
       - Track
+  /vessels:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            items:
+              type: integer
+            type: array
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Удаление судна
+      tags:
+      - Vessel
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            items:
+              type: integer
+            type: array
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Добавление судна
+      tags:
+      - Vessel
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            items:
+              type: integer
+            type: array
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Восстановление судна
+      tags:
+      - Vessel
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: список названий Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Добавление судна
+      tags:
+      - Vessel
 securityDefinitions:
   BearerAuth:
     description: Insert your access token default (Bearer access_token_here)

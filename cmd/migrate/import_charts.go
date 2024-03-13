@@ -90,9 +90,14 @@ func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint6
 		count++
 	}
 
-	if _, er := tx.ExecContext(ctx, "update vessels set created_at = COALESCE((select min(time) from tracks t where t.vessel_id = vessels.id), vessels.created_at)"); er != nil {
+	if _, er := tx.ExecContext(ctx, "update "+DBVessels+" set created_at = COALESCE((select min(time) from "+DBTracks+" t where t.vessel_id = vessels.id), vessels.created_at)"); er != nil {
 		err = errors.Join(err, er)
 	}
+
+	if _, er := tx.ExecContext(ctx, "select setval('"+DBVessels+"_id_seq', (SELECT MAX(id) FROM "+DBVessels+"))"); er != nil {
+		err = errors.Join(err, er)
+	}
+
 	err = tx.Commit()
 
 	return

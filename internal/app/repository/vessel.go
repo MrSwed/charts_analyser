@@ -4,6 +4,7 @@ import (
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
 	"context"
+	sqrl "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
@@ -23,8 +24,31 @@ func (r *VesselRepo) GetVessels(ctx context.Context, vesselIDs ...domain.VesselI
 	)
 	if sqlStr, args, err = sq.Select("id as vessel_id", "name as vessel_name").
 		From(constant.DBVessels).
-		Where("id = any($1)", pq.Array(vesselIDs)).
+		Where("id = any($1) and is_deleted is not true", pq.Array(vesselIDs)).
 		ToSql(); err != nil {
+		return
+	}
+
+	err = r.db.SelectContext(ctx, &vessels, sqlStr, args...)
+	if vessels == nil {
+		vessels = make(domain.Vessels, 0)
+	}
+	return
+}
+
+func (r *VesselRepo) AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels []domain.Vessel, err error) {
+	var (
+		sqlStr string
+		args   []interface{}
+	)
+	sqBuild := sq.Insert(constant.DBVessels).Columns("name")
+	for _, name := range vesselNames {
+		sqBuild = sqBuild.Values(name)
+	}
+	// Имена уникальные, при совпадении добавляемого имени вернем уже существующий
+	sqBuild = sqBuild.Suffix("on CONFLICT (name) DO UPDATE SET name=EXCLUDED.name returning id as vessel_id, name as vessel_name")
+
+	if sqlStr, args, err = sqBuild.ToSql(); err != nil {
 		return
 	}
 
@@ -32,15 +56,14 @@ func (r *VesselRepo) GetVessels(ctx context.Context, vesselIDs ...domain.VesselI
 	return
 }
 
-func (r *VesselRepo) AddVessel(ctx context.Context, vessel domain.InputVessel) (vesselID domain.VesselID, err error) {
+func (r *VesselRepo) SetDeleted(ctx context.Context, delete bool, vesselIDs ...domain.VesselID) (err error) {
 	var (
 		sqlStr string
 		args   []interface{}
 	)
-	if sqlStr, args, err = sq.Insert(constant.DBVessels).
-		Columns("name").
-		Values(vessel.VesselName).
-		Suffix("RETURNING id").
+	if sqlStr, args, err = sq.Update(constant.DBVessels).
+		Set("is_deleted", delete).
+		Where(sqrl.Eq{"id": vesselIDs}).
 		ToSql(); err != nil {
 		return
 	}

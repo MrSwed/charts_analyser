@@ -25,6 +25,10 @@ func (s *VesselService) GetVessels(ctx context.Context, vesselIDs ...domain.Vess
 	return
 }
 
-func (s *VesselService) AddVessel(ctx context.Context, vessel domain.InputVessel) (vesselID domain.VesselID, err error) {
-	return s.r.AddVessel(ctx, vessel)
+func (s *VesselService) AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels []domain.Vessel, err error) {
+	return s.r.AddVessel(ctx, vesselNames...)
+}
+
+func (s *VesselService) SetDeleted(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error {
+	return s.r.SetDeleted(ctx, delete, vesselIDS...)
 }

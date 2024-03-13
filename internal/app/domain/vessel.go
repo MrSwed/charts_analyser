@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type VesselID int64
@@ -102,4 +103,9 @@ func (v *Vessels) IDs() (ids []VesselID) {
 		ids = append(ids, i.ID)
 	}
 	return
+}
+
+type VesselInfo struct {
+	Vessel
+	CreatedAt *time.Time `db:"created_at" json:"createdAt"`
 }

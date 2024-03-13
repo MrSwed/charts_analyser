@@ -44,5 +44,12 @@ func (h *Handler) Handler() *Handler {
 	track.Post("", veAw, h.Track())
 	track.Get(constant.RouteID, opAw, h.GetTrack())
 
+	vessel := api.Group(constant.RouteVessels)
+	vessel.Use(opAw)
+	vessel.Get("", h.GetVessel())
+	vessel.Post("", h.AddVessel())
+	vessel.Delete("", h.DeleteVessel())
+	vessel.Patch("", h.RestoreVessel())
+
 	return h
 }
