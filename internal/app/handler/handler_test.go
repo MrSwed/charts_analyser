@@ -9,6 +9,7 @@ import (
 	"charts_analyser/internal/app/domain"
 	"charts_analyser/internal/app/repository"
 	"charts_analyser/internal/app/service"
+	"context"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -1306,7 +1307,7 @@ func TestAddVessel(t *testing.T) {
 			},
 		},
 		{
-			name: "Add vessel name. OK",
+			name: "Add vessel. OK",
 			args: args{
 				method: http.MethodPost,
 				body:   newVessels,
@@ -1359,6 +1360,358 @@ func TestAddVessel(t *testing.T) {
 				code:        http.StatusCreated,
 				responseLen: &[]bool{true}[0],
 				contentType: "application/json",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bodyJSON, _ := json.Marshal(test.args.body)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
+			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			require.NoError(t, err)
+
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
+				require.NoError(t, err)
+			}()
+
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}
+
+func TestDeleteVessel(t *testing.T) {
+	repo := repository.NewRepository(db)
+	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
+	app := fiber.New()
+	app.Use(recover.New())
+
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
+
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
+	timeID := time.Now().Format("20060102150405")
+	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
+
+	ctx := context.Background()
+	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	require.NoError(t, err)
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		body    interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Delete vessel. No jwt",
+			args: args{
+				method: http.MethodDelete,
+				body:   vessels.IDs(),
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Delete vessel. Wrong role in jwt",
+			args: args{
+				method: http.MethodDelete,
+				body:   vessels.IDs(),
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Delete vessel. OK",
+			args: args{
+				method: http.MethodDelete,
+				body:   vessels.IDs(),
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Delete vessel. No body data",
+			args: args{
+				method: http.MethodDelete,
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Delete vessel. Bad body data.",
+			args: args{
+				method: http.MethodDelete,
+				body:   []interface{}{12.12, "vessel name", 1555444},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Delete vessel. Repeated ids.",
+			args: args{
+				method: http.MethodDelete,
+				body:   append(vessels.IDs(), vessels.IDs()...),
+
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bodyJSON, _ := json.Marshal(test.args.body)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
+			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			require.NoError(t, err)
+
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
+				require.NoError(t, err)
+			}()
+
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}
+
+func TestRestoreVessel(t *testing.T) {
+	repo := repository.NewRepository(db)
+	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
+	app := fiber.New()
+	app.Use(recover.New())
+
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
+
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
+	timeID := time.Now().Format("20060102150405")
+	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
+
+	ctx := context.Background()
+	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	require.NoError(t, err)
+	err = s.Vessel.SetDeleted(ctx, true, vessels.IDs()...)
+	require.NoError(t, err)
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		body    interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Restore vessel. No jwt",
+			args: args{
+				method: http.MethodPatch,
+				body:   vessels.IDs(),
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Restore vessel. Wrong role in jwt",
+			args: args{
+				method: http.MethodPatch,
+				body:   vessels.IDs(),
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Restore vessel. OK",
+			args: args{
+				method: http.MethodPatch,
+				body:   vessels.IDs(),
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Restore vessel. No body data",
+			args: args{
+				method: http.MethodPatch,
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Restore vessel. Bad body data.",
+			args: args{
+				method: http.MethodPatch,
+				body:   []interface{}{12.12, "vessel name", 1555444},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Restore vessel. Repeated ids.",
+			args: args{
+				method: http.MethodPatch,
+				body:   append(vessels.IDs(), vessels.IDs()...),
+
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
 			},
 		},
 	}

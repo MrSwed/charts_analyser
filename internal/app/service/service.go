@@ -31,7 +31,7 @@ type Chart interface {
 
 type Vessel interface {
 	GetVessels(ctx context.Context, vesselIDs ...domain.VesselID) (domain.Vessels, error)
-	AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels []domain.Vessel, err error)
+	AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels domain.Vessels, err error)
 	SetDeleted(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error
 }
 

@@ -101,7 +101,7 @@ func (h *Handler) DeleteVessel() fiber.Handler {
 			VesselIDs []domain.VesselID
 		)
 		err = c.BodyParser(&VesselIDs)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil && !errors.Is(err, io.EOF) || len(VesselIDs) == 0 {
 			c.Status(http.StatusBadRequest)
 			return nil
 		}
@@ -138,7 +138,7 @@ func (h *Handler) RestoreVessel() fiber.Handler {
 			VesselIDs []domain.VesselID
 		)
 		err = c.BodyParser(&VesselIDs)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil && !errors.Is(err, io.EOF) || len(VesselIDs) == 0 {
 			c.Status(http.StatusBadRequest)
 			return nil
 		}

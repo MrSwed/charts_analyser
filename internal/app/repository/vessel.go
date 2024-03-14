@@ -36,7 +36,7 @@ func (r *VesselRepo) GetVessels(ctx context.Context, vesselIDs ...domain.VesselI
 	return
 }
 
-func (r *VesselRepo) AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels []domain.Vessel, err error) {
+func (r *VesselRepo) AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels domain.Vessels, err error) {
 	var (
 		sqlStr      string
 		args        []interface{}
