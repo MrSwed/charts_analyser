@@ -1,6 +1,13 @@
 package error
 
-import "errors"
+import (
+	"errors"
+	"github.com/lib/pq"
+)
+
+const (
+	ErrUniqueViolationErr = pq.ErrorCode("23505")
+)
 
 var (
 	ErrNotExist           = errors.New("not exist")

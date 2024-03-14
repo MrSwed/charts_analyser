@@ -15,7 +15,7 @@ import (
 // AddVessel
 // @Tags        Vessel
 // @Summary     Добавление судна
-// @Description
+// @Description Добавляет новые, возвращает все: и добавленные и существующие, кроме удаленных
 // @Accept      json
 // @Produce     json
 // @Param       VesselNames   body     []domain.VesselName    true "список названий Судов"
@@ -39,12 +39,48 @@ func (h *Handler) AddVessel() fiber.Handler {
 		defer cancel()
 
 		result, err := h.s.Vessel.AddVessel(ctx, VesselNames...)
-		if err != nil && !errors.Is(err, myErr.ErrNotExist) {
+		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error add vessels", zap.Error(err), zap.Any("Names", VesselNames))
 			return nil
 		}
 		return c.Status(http.StatusCreated).JSON(result)
+	}
+}
+
+// UpdateVessel
+// @Tags        Vessel
+// @Summary     Изменение судна
+// @Description Смена названия судна, для не удаленных
+// @Accept      json
+// @Produce     json
+// @Param       VesselNames   body     []domain.Vessel    true "список названий судов"
+// @Success     200           {object} []domain.Vessel    "успешно обновлённые суда"
+// @Failure     400
+// @Failure     500
+// @Router      /vessels [put]
+// @Security    BearerAuth
+func (h *Handler) UpdateVessel() fiber.Handler {
+	return func(c *fiber.Ctx) (err error) {
+		var (
+			Vessels []domain.Vessel
+		)
+		err = c.BodyParser(&Vessels)
+		if err != nil && !errors.Is(err, io.EOF) || len(Vessels) == 0 {
+			c.Status(http.StatusBadRequest)
+			return nil
+		}
+
+		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
+		defer cancel()
+
+		result, err := h.s.Vessel.UpdateVessels(ctx, Vessels...)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			h.log.Error("Error add vessels", zap.Error(err), zap.Any("Vessels", Vessels))
+			return nil
+		}
+		return c.Status(http.StatusOK).JSON(result)
 	}
 }
 

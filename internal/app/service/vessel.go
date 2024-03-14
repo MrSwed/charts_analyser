@@ -29,6 +29,10 @@ func (s *VesselService) AddVessel(ctx context.Context, vesselNames ...domain.Ves
 	return s.r.AddVessel(ctx, vesselNames...)
 }
 
+func (s *VesselService) UpdateVessels(ctx context.Context, vessels ...domain.Vessel) (savedVessels domain.Vessels, err error) {
+	return s.r.UpdateVessels(ctx, vessels...)
+}
+
 func (s *VesselService) SetDeleted(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error {
 	return s.r.SetDeleted(ctx, delete, vesselIDS...)
 }

@@ -48,6 +48,7 @@ func (h *Handler) Handler() *Handler {
 	vessel.Use(opAw)
 	vessel.Get("", h.GetVessel())
 	vessel.Post("", h.AddVessel())
+	vessel.Put("", h.UpdateVessel())
 	vessel.Delete("", h.DeleteVessel())
 	vessel.Patch("", h.RestoreVessel())
 
