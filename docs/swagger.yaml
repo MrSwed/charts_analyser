@@ -101,7 +101,7 @@ info:
   version: "1.0"
 paths:
   /chart/vessels:
-    get:
+    post:
       consumes:
       - application/json
       description: которые пересекали указанные морские карты в заданный временной
@@ -133,7 +133,7 @@ paths:
       tags:
       - Chart
   /chart/zones:
-    get:
+    post:
       consumes:
       - application/json
       description: которые пересекались заданными в запросе судами в заданный временной
@@ -244,7 +244,7 @@ paths:
       tags:
       - Monitor
   /monitor/state:
-    get:
+    post:
       consumes:
       - application/json
       description: для выбранных судов, стоящих на мониторинге
@@ -357,9 +357,7 @@ paths:
         required: true
         schema:
           items:
-            items:
-              type: integer
-            type: array
+            type: integer
           type: array
       produces:
       - application/json
@@ -381,16 +379,12 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: список ID Судов
-        in: body
-        name: VesselNames
-        required: true
-        schema:
-          items:
-            items:
-              type: integer
-            type: array
-          type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: vesselIDs
+        type: array
       produces:
       - application/json
       responses:
@@ -406,7 +400,7 @@ paths:
           description: Internal Server Error
       security:
       - BearerAuth: []
-      summary: Добавление судна
+      summary: Информация о судах
       tags:
       - Vessel
     patch:
@@ -419,9 +413,7 @@ paths:
         required: true
         schema:
           items:
-            items:
-              type: integer
-            type: array
+            type: integer
           type: array
       produces:
       - application/json

@@ -49,7 +49,7 @@ func (h *Handler) MonitoredList() fiber.Handler {
 // @Failure     400
 // @Failure     404           "no data yet"
 // @Failure     500
-// @Router      /monitor/state [get]
+// @Router      /monitor/state [post]
 // @Security    BearerAuth
 func (h *Handler) VesselState() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
@@ -60,16 +60,6 @@ func (h *Handler) VesselState() fiber.Handler {
 		if err != nil && !errors.Is(err, io.EOF) {
 			c.Status(http.StatusBadRequest)
 			return nil
-		}
-
-		if len(VesselIDs) == 0 {
-			var query domain.InputVessels
-			if err = c.QueryParser(&query); err != nil {
-				c.Status(http.StatusBadRequest)
-				h.log.Error("SetControl,query", zap.Error(err))
-				return nil
-			}
-			VesselIDs = query.VesselIDs
 		}
 
 		if len(VesselIDs) == 0 {

@@ -50,11 +50,11 @@ func (h *Handler) AddVessel() fiber.Handler {
 
 // GetVessel
 // @Tags        Vessel
-// @Summary     Добавление судна
+// @Summary     Информация о судах
 // @Description
 // @Accept      json
 // @Produce     json
-// @Param       VesselNames   body     []domain.VesselIDs    true "список ID Судов"
+// @Param       vesselIDs     query    domain.InputVessels    true "список ID Судов"
 // @Success     200           {object} []domain.Vessel
 // @Failure     400
 // @Failure     500
@@ -63,21 +63,20 @@ func (h *Handler) AddVessel() fiber.Handler {
 func (h *Handler) GetVessel() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
 		var (
-			VesselIDs []domain.VesselID
+			query domain.InputVessels
 		)
-		err = c.BodyParser(&VesselIDs)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err = c.QueryParser(&query); err != nil {
 			c.Status(http.StatusBadRequest)
+			h.log.Error("Get vessels, query", zap.Any("query", c.Request().RequestURI()), zap.Error(err))
 			return nil
 		}
-
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
-		result, err := h.s.Vessel.GetVessels(ctx, VesselIDs...)
+		result, err := h.s.Vessel.GetVessels(ctx, query.VesselIDs...)
 		if err != nil && !errors.Is(err, myErr.ErrNotExist) {
 			c.Status(http.StatusInternalServerError)
-			h.log.Error("Error get vessels", zap.Error(err), zap.Any("Names", VesselIDs))
+			h.log.Error("Error get vessels", zap.Error(err), zap.Any("ids", query.VesselIDs))
 			return nil
 		}
 		return c.Status(http.StatusOK).JSON(result)
@@ -90,7 +89,7 @@ func (h *Handler) GetVessel() fiber.Handler {
 // @Description
 // @Accept      json
 // @Produce     json
-// @Param       VesselNames   body     []domain.VesselIDs    true "список ID Судов"
+// @Param       VesselNames   body     []domain.VesselID    true "список ID Судов"
 // @Success     200           {string} string "Ok"
 // @Failure     400
 // @Failure     500
@@ -127,7 +126,7 @@ func (h *Handler) DeleteVessel() fiber.Handler {
 // @Description
 // @Accept      json
 // @Produce     json
-// @Param       VesselNames   body     []domain.VesselIDs    true "список ID Судов"
+// @Param       VesselNames   body     []domain.VesselID    true "список ID Судов"
 // @Success     200           {string} string "Ok"
 // @Failure     400
 // @Failure     500

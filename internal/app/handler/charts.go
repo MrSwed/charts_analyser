@@ -22,7 +22,7 @@ import (
 // @Success     200         {object} []string
 // @Failure     400
 // @Failure     500
-// @Router      /chart/zones [get]
+// @Router      /chart/zones [post]
 // @Security    BearerAuth
 func (h *Handler) ChartZones() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {
@@ -58,7 +58,7 @@ func (h *Handler) ChartZones() fiber.Handler {
 // @Success     200         {object} []uint64
 // @Failure     400
 // @Failure     500
-// @Router      /chart/vessels [get]
+// @Router      /chart/vessels [post]
 // @Security    BearerAuth
 func (h *Handler) ChartVessels() fiber.Handler {
 	return func(c *fiber.Ctx) (err error) {

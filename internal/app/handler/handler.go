@@ -30,12 +30,12 @@ func (h *Handler) Handler() *Handler {
 
 	chart := api.Group(constant.RouteChart)
 	chart.Use(opAw)
-	chart.Get(constant.RouteZones, h.ChartZones())
-	chart.Get(constant.RouteVessels, h.ChartVessels())
+	chart.Post(constant.RouteZones, h.ChartZones())
+	chart.Post(constant.RouteVessels, h.ChartVessels())
 
 	monitor := api.Group(constant.RouteMonitor)
 	monitor.Use(opAw)
-	monitor.Get(constant.RouteState, h.VesselState())
+	monitor.Post(constant.RouteState, h.VesselState())
 	monitor.Get("", h.MonitoredList())
 	monitor.Post("", h.SetControl())
 	monitor.Delete("", h.DelControl())

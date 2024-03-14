@@ -16,7 +16,7 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/chart/vessels": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -64,7 +64,7 @@ const docTemplate = `{
             }
         },
         "/chart/zones": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -239,7 +239,7 @@ const docTemplate = `{
             }
         },
         "/monitor/state": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -417,22 +417,16 @@ const docTemplate = `{
                 "tags": [
                     "Vessel"
                 ],
-                "summary": "Добавление судна",
+                "summary": "Информация о судах",
                 "parameters": [
                     {
-                        "description": "список ID Судов",
-                        "name": "VesselNames",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "vesselIDs",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -526,10 +520,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer"
-                                }
+                                "type": "integer"
                             }
                         }
                     }
@@ -574,10 +565,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer"
-                                }
+                                "type": "integer"
                             }
                         }
                     }

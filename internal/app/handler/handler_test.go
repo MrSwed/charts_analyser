@@ -78,7 +78,7 @@ var (
 	}()
 )
 
-func TestZones(t *testing.T) {
+func TestChartZones(t *testing.T) {
 	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
@@ -105,7 +105,7 @@ func TestZones(t *testing.T) {
 	}
 	type args struct {
 		method  string
-		query   map[string]interface{}
+		body    map[string]interface{}
 		headers map[string]string
 	}
 	tests := []struct {
@@ -116,8 +116,8 @@ func TestZones(t *testing.T) {
 		{
 			name: "Get vessel zones. No jwt",
 			args: args{
-				method: http.MethodGet,
-				query: map[string]interface{}{
+				method: http.MethodPost,
+				body: map[string]interface{}{
 					"vesselIDs": []int64{vesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
@@ -132,8 +132,8 @@ func TestZones(t *testing.T) {
 		{
 			name: "Get vessel zones. Wrong role in jwt",
 			args: args{
-				method: http.MethodGet,
-				query: map[string]interface{}{
+				method: http.MethodPost,
+				body: map[string]interface{}{
 					"vesselIDs": []int64{vesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
@@ -149,8 +149,8 @@ func TestZones(t *testing.T) {
 		{
 			name: "Get vessel zones. Operator",
 			args: args{
-				method: http.MethodGet,
-				query: map[string]interface{}{
+				method: http.MethodPost,
+				body: map[string]interface{}{
 					"vesselIDs": []int64{vesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
@@ -168,8 +168,8 @@ func TestZones(t *testing.T) {
 		{
 			name: "Get vessel zones. Bad vessel ids",
 			args: args{
-				method: http.MethodGet,
-				query: map[string]interface{}{
+				method: http.MethodPost,
+				body: map[string]interface{}{
 					"vesselIDs": []string{strconv.FormatInt(vesselID, 10)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
@@ -185,8 +185,8 @@ func TestZones(t *testing.T) {
 		{
 			name: "Get vessel zones. unknown",
 			args: args{
-				method: http.MethodGet,
-				query: map[string]interface{}{
+				method: http.MethodPost,
+				body: map[string]interface{}{
 					"vesselIDs": []int64{10000000000},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
@@ -207,8 +207,8 @@ func TestZones(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			bodyJSON, _ := json.Marshal(test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteZones, bytes.NewReader(bodyJSON))
+			bodyJSON, _ := json.Marshal(test.args.body)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteChart+constant.RouteZones, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -262,7 +262,7 @@ func TestZones(t *testing.T) {
 	}
 }
 
-func TestVessels(t *testing.T) {
+func TestChartVessels(t *testing.T) {
 	repo := repository.NewRepository(db)
 	logger, _ := zap.NewDevelopment()
 	s := service.NewService(repo, logger)
@@ -271,7 +271,7 @@ func TestVessels(t *testing.T) {
 
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
-	zoneName := "zone_205"
+	zoneName := "zone_40"
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
 	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2017-01-09 00:00:00`)
@@ -297,7 +297,7 @@ func TestVessels(t *testing.T) {
 		{
 			name: "Get zone vessels. No JWT",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query: map[string]interface{}{
 					"zoneNames": []string{zoneName},
 					"start":     timeStart.Format(time.RFC3339),
@@ -313,7 +313,7 @@ func TestVessels(t *testing.T) {
 		{
 			name: "Get zone vessels. ok",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query: map[string]interface{}{
 					"zoneNames": []string{zoneName},
 					"start":     timeStart.Format(time.RFC3339),
@@ -332,7 +332,7 @@ func TestVessels(t *testing.T) {
 		{
 			name: "Get zone vessels. Unknown",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query: map[string]interface{}{
 					"zoneNames": []string{"zone_XXX"},
 					"start":     timeStart.Format(time.RFC3339),
@@ -351,7 +351,7 @@ func TestVessels(t *testing.T) {
 		{
 			name: "Get zone vessels. bad parameters",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query: map[string]interface{}{
 					"vesselIDs": []string{"wrong keys"},
 					"start":     timeStart.Format(time.RFC3339),
@@ -371,7 +371,7 @@ func TestVessels(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			bodyJSON, _ := json.Marshal(&test.args.query)
-			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteChart+constant.RouteVessels, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
 
 			request.Header.Set("Content-Type", "application/json")
@@ -459,7 +459,7 @@ func TestVesselState(t *testing.T) {
 		{
 			name: "Control vessel. No jwt",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query:  []int64{vesselID},
 			},
 			want: want{
@@ -471,7 +471,7 @@ func TestVesselState(t *testing.T) {
 		{
 			name: "Control vessel. Wrong role in jwt",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + jwtVessel,
@@ -484,7 +484,7 @@ func TestVesselState(t *testing.T) {
 		{
 			name: "Control vessel. Operator",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query:  []int64{vesselID},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
@@ -499,7 +499,7 @@ func TestVesselState(t *testing.T) {
 		{
 			name: "Control vessel. Bad vessel ids",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query:  []string{strconv.FormatInt(vesselID, 10)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
@@ -512,7 +512,7 @@ func TestVesselState(t *testing.T) {
 		{
 			name: "Control vessel. unknown",
 			args: args{
-				method: http.MethodGet,
+				method: http.MethodPost,
 				query:  []int64{10000000000},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
