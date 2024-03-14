@@ -11,6 +11,7 @@ import (
 	"charts_analyser/internal/app/service"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/golang-jwt/jwt/v4"
@@ -20,6 +21,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -1723,6 +1725,204 @@ func TestRestoreVessel(t *testing.T) {
 			bodyJSON, _ := json.Marshal(test.args.body)
 			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
 			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			require.NoError(t, err)
+
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
+				require.NoError(t, err)
+			}()
+
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}
+
+func TestGetVessel(t *testing.T) {
+	repo := repository.NewRepository(db)
+	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
+	app := fiber.New()
+	app.Use(recover.New())
+
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
+
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
+	timeID := time.Now().Format("20060102150405")
+	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
+
+	ctx := context.Background()
+	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	require.NoError(t, err)
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		query   map[string]interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Get vessel. No jwt",
+			args: args{
+				method: http.MethodGet,
+				query:  map[string]interface{}{"vesselIDs": vessels.IDs()},
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Get vessel. Wrong role in jwt",
+			args: args{
+				method: http.MethodGet,
+				query:  map[string]interface{}{"vesselIDs": vessels.IDs()},
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Get vessel. OK",
+			args: args{
+				method: http.MethodGet,
+				query:  map[string]interface{}{"vesselIDs": vessels.IDs()},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:            http.StatusOK,
+				responseLen:     &[]bool{true}[0],
+				responseContain: vessels.IDs()[0].String(),
+				contentType:     "application/json",
+			},
+		},
+		{
+			name: "Get vessel. No query data, empty list",
+			args: args{
+				method: http.MethodGet,
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:            http.StatusOK,
+				responseLen:     &[]bool{true}[0],
+				responseContain: "[]",
+				contentType:     "application/json",
+			},
+		},
+		{
+			name: "Get vessel. Bad body data.",
+			args: args{
+				method: http.MethodGet,
+				query:  map[string]interface{}{"vesselIDs": []interface{}{12.12, "vessel name", 1555444}},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Get vessel. Repeated ids.",
+			args: args{
+				method: http.MethodGet,
+				query:  map[string]interface{}{"vesselIDs": append(vessels.IDs(), vessels.IDs()...)},
+
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:            http.StatusOK,
+				responseContain: vessels.IDs()[0].String(),
+				responseLen:     &[]bool{true}[0],
+				contentType:     "application/json",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bodyJSON, _ := json.Marshal(test.args.query)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
+			require.NoError(t, err)
+
+			queries := url.Values{}
+			for k, v := range test.args.query {
+				switch vv := v.(type) {
+				case []domain.VesselID:
+					for _, vs := range vv {
+						queries.Add(k, vs.String())
+					}
+				case []interface{}:
+					for _, vs := range vv {
+						queries.Add(k, fmt.Sprintf("%v", vs))
+					}
+				default:
+					queries.Add(k, fmt.Sprintf("%v", vv))
+				}
+			}
+			queries.Encode()
+			request.URL.RawQuery = queries.Encode()
 
 			request.Header.Set("Content-Type", "application/json")
 			if len(test.args.headers) > 0 {
