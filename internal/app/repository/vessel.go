@@ -38,12 +38,16 @@ func (r *VesselRepo) GetVessels(ctx context.Context, vesselIDs ...domain.VesselI
 
 func (r *VesselRepo) AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels []domain.Vessel, err error) {
 	var (
-		sqlStr string
-		args   []interface{}
+		sqlStr      string
+		args        []interface{}
+		uniqueCheck = make(map[domain.VesselName]struct{})
 	)
 	sqBuild := sq.Insert(constant.DBVessels).Columns("name")
 	for _, name := range vesselNames {
-		sqBuild = sqBuild.Values(name)
+		if _, ok := uniqueCheck[name]; !ok {
+			uniqueCheck[name] = struct{}{}
+			sqBuild = sqBuild.Values(name)
+		}
 	}
 	// Имена уникальные, при совпадении добавляемого имени вернем уже существующий
 	sqBuild = sqBuild.Suffix("on CONFLICT (name) DO UPDATE SET name=EXCLUDED.name returning id as vessel_id, name as vessel_name")

@@ -1245,3 +1245,174 @@ func TestTrack(t *testing.T) {
 		})
 	}
 }
+
+func TestAddVessel(t *testing.T) {
+	repo := repository.NewRepository(db)
+	logger, _ := zap.NewDevelopment()
+	s := service.NewService(repo, logger)
+	app := fiber.New()
+	app.Use(recover.New())
+
+	_ = NewHandler(app, s, &conf.Config, logger).Handler()
+
+	vesselID := int64(9110913)
+	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
+	require.NoError(t, err)
+
+	timeID := time.Now().Format("20060102150405")
+	newVessels := []string{"Test1 Vessel_" + timeID, "Test2 Vessel_" + timeID}
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		body    interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Add vessel. No jwt",
+			args: args{
+				method: http.MethodPost,
+				body:   newVessels,
+			},
+			want: want{
+				code:        http.StatusUnauthorized,
+				response:    &[]string{"Missing or malformed JWT"}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Add vessel. Wrong role in jwt",
+			args: args{
+				method: http.MethodPost,
+				body:   newVessels,
+				headers: map[string]string{
+					"Authorization": "Bearer " + jwtVessel,
+				},
+			},
+			want: want{
+				code: http.StatusForbidden,
+			},
+		},
+		{
+			name: "Add vessel name. OK",
+			args: args{
+				method: http.MethodPost,
+				body:   newVessels,
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusCreated,
+				responseLen: &[]bool{true}[0],
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "Add vessel. No body data",
+			args: args{
+				method: http.MethodPost,
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Add vessel. Bad body data. Strings only",
+			args: args{
+				method: http.MethodPost,
+				body:   []interface{}{12.12, "vessel name"},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Add vessel. Repeated names. Re-add vessel - return earlier added",
+			args: args{
+				method: http.MethodPost,
+				body:   append(newVessels, newVessels...),
+
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtOperator,
+				},
+			},
+			want: want{
+				code:        http.StatusCreated,
+				responseLen: &[]bool{true}[0],
+				contentType: "application/json",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bodyJSON, _ := json.Marshal(test.args.body)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteVessels, bytes.NewReader(bodyJSON))
+			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			require.NoError(t, err)
+
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
+				require.NoError(t, err)
+			}()
+
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}

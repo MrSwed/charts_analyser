@@ -30,7 +30,7 @@ func (h *Handler) AddVessel() fiber.Handler {
 			VesselNames []domain.VesselName
 		)
 		err = c.BodyParser(&VesselNames)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil && !errors.Is(err, io.EOF) || len(VesselNames) == 0 {
 			c.Status(http.StatusBadRequest)
 			return nil
 		}
