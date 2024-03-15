@@ -15,6 +15,16 @@ func NewClaimVessels(id VesselID, name VesselName) *ClaimsAuth {
 	}
 }
 
+func NewClaimOperator(id OperatorID, name OperatorName) *ClaimsAuth {
+	return &ClaimsAuth{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject: id.String(),
+		},
+		Name: name.String(),
+		Role: constant.RoleOperator,
+	}
+}
+
 type ClaimsAuth struct {
 	jwt.RegisteredClaims
 	Name string        `json:"name"`

@@ -43,7 +43,7 @@ func main() {
 		logger.Fatal("cannot connect db", zap.Error(err))
 	}
 
-	operatorClaims := domain.ClaimsOperator{}
+	operatorClaims := appDomain.NewClaimOperator(1, "Simulator")
 
 	if operatorToken, err := operatorClaims.Token(conf.JWTSigningKey); err == nil && operatorToken != "" {
 		ctx = context.WithValue(ctx, constant.CtxValueKeyJWTOperator, operatorToken)
