@@ -21,6 +21,8 @@ import (
 // @Produce     json
 // @Success     200         {object} []string
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /chart/zones [post]
 // @Security    BearerAuth
@@ -57,6 +59,8 @@ func (h *Handler) ChartZones() fiber.Handler {
 // @Produce     json
 // @Success     200         {object} []uint64
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /chart/vessels [post]
 // @Security    BearerAuth
@@ -96,6 +100,8 @@ func (h *Handler) ChartVessels() fiber.Handler {
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /track [post]
 // @Security    BearerAuth
@@ -145,6 +151,8 @@ func (h *Handler) Track() fiber.Handler {
 // @Produce     json
 // @Success     200          {object} []domain.Track
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /track/{id} [post]
 // @Security    BearerAuth

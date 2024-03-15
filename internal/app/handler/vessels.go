@@ -21,6 +21,8 @@ import (
 // @Param       VesselNames   body     []domain.VesselName    true "список названий Судов"
 // @Success     201           {object} []domain.Vessel
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /vessels [post]
 // @Security    BearerAuth
@@ -57,6 +59,8 @@ func (h *Handler) AddVessel() fiber.Handler {
 // @Param       VesselNames   body     []domain.Vessel    true "список названий судов"
 // @Success     200           {object} []domain.Vessel    "успешно обновлённые суда"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /vessels [put]
 // @Security    BearerAuth
@@ -93,6 +97,8 @@ func (h *Handler) UpdateVessel() fiber.Handler {
 // @Param       vesselIDs     query    domain.InputVessels    true "список ID Судов"
 // @Success     200           {object} []domain.Vessel
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /vessels [get]
 // @Security    BearerAuth
@@ -128,6 +134,8 @@ func (h *Handler) GetVessel() fiber.Handler {
 // @Param       VesselNames   body     []domain.VesselID    true "список ID Судов"
 // @Success     200           {string} string "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /vessels [delete]
 // @Security    BearerAuth
@@ -165,6 +173,8 @@ func (h *Handler) DeleteVessel() fiber.Handler {
 // @Param       VesselNames   body     []domain.VesselID    true "список ID Судов"
 // @Success     200           {string} string "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /vessels [patch]
 // @Security    BearerAuth

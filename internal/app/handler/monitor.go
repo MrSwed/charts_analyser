@@ -20,6 +20,8 @@ import (
 // @Produce     json
 // @Success     200         {object} []domain.Vessel "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /monitor [get]
 // @Security    BearerAuth
@@ -47,6 +49,8 @@ func (h *Handler) MonitoredList() fiber.Handler {
 // @Param       VesselIDs   body     []domain.VesselID    true "список ID Судов"
 // @Success     200         {object} []domain.VesselState "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     404           "no data yet"
 // @Failure     500
 // @Router      /monitor/state [post]
@@ -90,6 +94,8 @@ func (h *Handler) VesselState() fiber.Handler {
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /monitor [post]
 // @Security    BearerAuth
@@ -145,6 +151,8 @@ func (h *Handler) SetControl() fiber.Handler {
 // @Produce     json
 // @Success     200         {string} string "Ok"
 // @Failure     400
+// @Failure     401
+// @Failure     403
 // @Failure     500
 // @Router      /monitor [delete]
 // @Security    BearerAuth
