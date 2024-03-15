@@ -6,5 +6,5 @@ const (
 	TokenLifeTime       = 60 * 60 * 24
 	TokenVesselLifeTime = 60 * 60 * 24 * 365
 	TokenRoleKey        = "role"
-	TokenIdKey          = "sub"
+	TokenIDKey          = "sub"
 )
