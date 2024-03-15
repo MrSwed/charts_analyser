@@ -10,13 +10,13 @@ import (
 	"net/http"
 )
 
-func GetAccessWare(c *config.JWT) fiber.Handler {
+func GetAccessWare(confJWT *config.JWT) fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			_, err = c.Status(http.StatusUnauthorized).WriteString(err.Error())
 			return err
 		},
-		SigningKey:    []byte(c.JWTSigningKey),
+		SigningKey:    []byte(confJWT.JWTSigningKey),
 		SigningMethod: jwt.SigningMethodHS512.Name,
 		TokenLookup:   "header:" + fiber.HeaderAuthorization,
 		AuthScheme:    "Bearer",

@@ -43,9 +43,9 @@ func main() {
 		logger.Fatal("cannot connect db", zap.Error(err))
 	}
 
-	operatorClaims := appDomain.NewClaimOperator(1, "Simulator")
+	operatorClaims := appDomain.NewClaimOperator(&conf.JWT, 1, "Simulator")
 
-	if operatorToken, err := operatorClaims.Token(conf.JWTSigningKey); err == nil && operatorToken != "" {
+	if operatorToken, err := operatorClaims.Token(); err == nil && operatorToken != "" {
 		ctx = context.WithValue(ctx, constant.CtxValueKeyJWTOperator, operatorToken)
 	} else if err != nil {
 		logger.Fatal("Build operator jwt", zap.Error(err))
@@ -71,8 +71,8 @@ func main() {
 			time.Sleep(100 * time.Millisecond)
 			logger.Info("Start simulation for", zap.Any("vessel", vessel.String()))
 
-			vesselClaims := appDomain.NewClaimVessels(vessel.ID, vessel.Name)
-			jwtStr, er := vesselClaims.Token(conf.JWTSigningKey)
+			vesselClaims := appDomain.NewClaimVessels(&conf.JWT, vessel.ID, vessel.Name)
+			jwtStr, er := vesselClaims.Token()
 			if er != nil {
 				logger.Fatal("Build vessel jwt", zap.Error(err))
 			}

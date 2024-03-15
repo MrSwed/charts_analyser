@@ -2,11 +2,9 @@ package constant
 
 const (
 	EnvNameServerAddress  = "ADDRESS"
-	EnvNameDBDSN          = "DATABASE_DSN"
 	EnvNameTrackInterval  = "TRACK_INTERVAL"
 	EnvNameVesselCount    = "VESSEL_COUNT"
 	EnvNameSleepBeforeRun = "SLEEP_BEFORE_RUN"
-	EnvNameJWTSecretKey   = "JWT_SECRET_KEY"
 
 	DefaultNumVessels         = 5
 	DefaultTrackInterval      = 10
@@ -16,8 +14,6 @@ const (
 
 	RouteTrack   = "/api/track"
 	RouteMonitor = "/api/monitor"
-
-	JWTSigningKey = "JWTSigningKeyDefaultString"
 
 	CtxValueKeyJWTOperator CtxKey = "jwt_operator"
 	CtxValueKeyJWTVessel   CtxKey = "jwt_vessel"
