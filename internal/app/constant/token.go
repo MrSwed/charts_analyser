@@ -3,5 +3,6 @@ package constant
 const (
 	JWTSigningKey = "JWTSigningKeyDefaultString"
 	CtxStorageKey = "auth"
-	TokenRoleName = "role"
+	TokenRoleKey  = "role"
+	TokenIdKey    = "sub"
 )

@@ -37,27 +37,6 @@ type testConfig struct {
 	jwtOperator string
 }
 
-type ClaimsVessel struct {
-	jwt.RegisteredClaims
-	*domain.Vessel
-	Role int64 `json:"role"`
-}
-
-func (c *ClaimsVessel) Token(key string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, ClaimsVessel{
-		RegisteredClaims: jwt.RegisteredClaims{},
-		Vessel:           c.Vessel,
-		Role:             1,
-	})
-
-	tokenString, err := token.SignedString([]byte(key))
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
-}
-
 func newEnvConfig() (c *testConfig) {
 	err := godotenv.Load(".env.test")
 	if err != nil {
@@ -91,7 +70,7 @@ func TestChartZones(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -438,7 +417,7 @@ func TestVesselState(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -598,7 +577,7 @@ func TestMonitoredList(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -725,7 +704,7 @@ func TestSetControl(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -890,7 +869,7 @@ func TestDeleteControl(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1055,11 +1034,11 @@ func TestTrack(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
-	claimsUnknownVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(10000000000)}}
+	claimsUnknownVessel := domain.NewClaimVessels(domain.VesselID(10000000000), "")
 	jwtUnknownVessel, err := claimsUnknownVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1259,7 +1238,7 @@ func TestAddVessel(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1430,7 +1409,7 @@ func TestDeleteVessel(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1606,7 +1585,7 @@ func TestRestoreVessel(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1783,7 +1762,7 @@ func TestGetVessel(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 
@@ -1980,7 +1959,7 @@ func TestUpdateVessel(t *testing.T) {
 	_ = NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := ClaimsVessel{Vessel: &domain.Vessel{ID: domain.VesselID(vesselID)}}
+	claimsVessel := domain.NewClaimVessels(domain.VesselID(vesselID), "")
 	jwtVessel, err := claimsVessel.Token(conf.JWTSigningKey)
 	require.NoError(t, err)
 

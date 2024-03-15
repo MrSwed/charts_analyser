@@ -37,7 +37,7 @@ func CheckIsRole(expRole constant.Role) fiber.Handler {
 func GetVesselID(c *fiber.Ctx) (id domain.VesselID) {
 	claims := GetTokenClaims(c)
 	if role(claims).CheckIsRole(constant.RoleVessel) {
-		switch cl := claims["id"].(type) {
+		switch cl := claims[constant.TokenIdKey].(type) {
 		case float64:
 			id = domain.VesselID(cl)
 		case string:
@@ -58,5 +58,5 @@ func GetTokenClaims(c *fiber.Ctx) (claims jwt.MapClaims) {
 }
 
 func role(claims jwt.MapClaims) constant.Role {
-	return constant.Role(claims[constant.TokenRoleName].(float64))
+	return constant.Role(claims[constant.TokenRoleKey].(float64))
 }

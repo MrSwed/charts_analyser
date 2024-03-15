@@ -1,6 +1,7 @@
 package main
 
 import (
+	appDomain "charts_analyser/internal/app/domain"
 	"charts_analyser/internal/simulator/config"
 	"charts_analyser/internal/simulator/constant"
 	"charts_analyser/internal/simulator/domain"
@@ -70,7 +71,7 @@ func main() {
 			time.Sleep(100 * time.Millisecond)
 			logger.Info("Start simulation for", zap.Any("vessel", vessel.String()))
 
-			vesselClaims := domain.ClaimsVessel{Vessel: &vessel.Vessel}
+			vesselClaims := appDomain.NewClaimVessels(vessel.ID, vessel.Name)
 			jwtStr, er := vesselClaims.Token(conf.JWTSigningKey)
 			if er != nil {
 				logger.Fatal("Build vessel jwt", zap.Error(err))
