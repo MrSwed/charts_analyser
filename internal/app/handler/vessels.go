@@ -153,7 +153,7 @@ func (h *Handler) DeleteVessel() fiber.Handler {
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
-		err = h.s.Vessel.SetDeleted(ctx, true, VesselIDs...)
+		err = h.s.Vessel.SetDeleteVessels(ctx, true, VesselIDs...)
 		if err != nil && !errors.Is(err, myErr.ErrNotExist) {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error delete vessels", zap.Error(err), zap.Any("ids", VesselIDs))
@@ -192,7 +192,7 @@ func (h *Handler) RestoreVessel() fiber.Handler {
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
-		err = h.s.Vessel.SetDeleted(ctx, false, VesselIDs...)
+		err = h.s.Vessel.SetDeleteVessels(ctx, false, VesselIDs...)
 		if err != nil && !errors.Is(err, myErr.ErrNotExist) {
 			c.Status(http.StatusInternalServerError)
 			h.log.Error("Error restore vessels", zap.Error(err), zap.Any("ids", VesselIDs))

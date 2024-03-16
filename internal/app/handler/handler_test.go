@@ -1597,7 +1597,7 @@ func TestRestoreVessel(t *testing.T) {
 	ctx := context.Background()
 	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
-	err = s.Vessel.SetDeleted(ctx, true, vessels.IDs()...)
+	err = s.Vessel.SetDeleteVessels(ctx, true, vessels.IDs()...)
 	require.NoError(t, err)
 
 	type want struct {

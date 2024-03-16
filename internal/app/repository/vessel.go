@@ -105,7 +105,7 @@ func (r *VesselRepo) UpdateVessels(ctx context.Context, vessels ...domain.Vessel
 	return
 }
 
-func (r *VesselRepo) SetDeleted(ctx context.Context, delete bool, vesselIDs ...domain.VesselID) (err error) {
+func (r *VesselRepo) SetDeleteVessels(ctx context.Context, delete bool, vesselIDs ...domain.VesselID) (err error) {
 	var (
 		sqlStr string
 		args   []interface{}

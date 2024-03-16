@@ -33,7 +33,7 @@ type Vessel interface {
 	GetVessels(ctx context.Context, vesselIDs ...domain.VesselID) (domain.Vessels, error)
 	AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels domain.Vessels, err error)
 	UpdateVessels(ctx context.Context, vessels ...domain.Vessel) (savedVessels domain.Vessels, err error)
-	SetDeleted(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error
+	SetDeleteVessels(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error
 }
 
 type Monitor interface {
