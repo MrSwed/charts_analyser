@@ -31,11 +31,6 @@ func TestChartZones(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
 	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2017-01-09 00:00:00`)
@@ -62,7 +57,7 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": []int64{vesselID},
+					"vesselIDs": int64(conf.VesselID),
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -78,12 +73,12 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": []int64{vesselID},
+					"vesselIDs": int64(conf.VesselID),
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -95,7 +90,7 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": []int64{vesselID},
+					"vesselIDs": []domain.VesselID{conf.VesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -114,7 +109,7 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": []string{strconv.FormatInt(vesselID, 10)},
+					"vesselIDs": []string{strconv.FormatInt(int64(conf.VesselID), 10)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -378,11 +373,6 @@ func TestTrack(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	claimsUnknownVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(10000000000), "")
 	jwtUnknownVessel, err := claimsUnknownVessel.Token()
 	require.NoError(t, err)
@@ -445,7 +435,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []float64{12.12, 12.12},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -459,7 +449,7 @@ func TestTrack(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -472,7 +462,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []string{"12.12", "12.12"},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -497,7 +487,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []int64{},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{

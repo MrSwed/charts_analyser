@@ -13,17 +13,30 @@ import (
 
 type testConfig struct {
 	config.Config
+	domain.VesselID
+	jwtVessel   string
 	jwtOperator string
+	jwtAdmin    string
 }
 
-func newEnvConfig() (c *testConfig) {
+func newTestsEnvConfig() (c *testConfig) {
 	err := godotenv.Load(".env.test")
 	if err != nil {
 		log.Fatal(err)
 	}
 	c = &testConfig{}
 	c.WithEnv().CleanSchemes()
-	c.jwtOperator, err = domain.NewClaimOperator(&c.JWT, 12, "User for test").Token()
+
+	c.jwtAdmin, err = domain.NewClaimAdmin(&c.JWT, 1, "Test Admin").Token()
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.jwtOperator, err = domain.NewClaimOperator(&c.JWT, 12, "Test Operator").Token()
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.VesselID = 9110913
+	c.jwtVessel, err = domain.NewClaimVessels(&c.JWT, c.VesselID, "Test Vessel").Token()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +44,7 @@ func newEnvConfig() (c *testConfig) {
 }
 
 var (
-	conf = newEnvConfig()
+	conf = newTestsEnvConfig()
 	db   = func() *sqlx.DB {
 		db, err := sqlx.Connect("postgres", conf.DatabaseDSN)
 		if err != nil {

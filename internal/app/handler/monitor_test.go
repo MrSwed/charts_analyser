@@ -30,9 +30,6 @@ func TestVesselState(t *testing.T) {
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
 
 	type want struct {
 		code            int
@@ -55,7 +52,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. No jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -67,9 +64,9 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. Wrong role in jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -80,7 +77,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. User",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -189,11 +186,6 @@ func TestMonitoredList(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -226,7 +218,7 @@ func TestMonitoredList(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -316,11 +308,6 @@ func TestSetControl(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -342,7 +329,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. No jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -354,9 +341,9 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Wrong role in jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -367,7 +354,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. User",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -382,7 +369,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Bad vessel ids",
 			args: args{
 				method: http.MethodPost,
-				query:  []string{strconv.FormatInt(vesselID, 10)},
+				query:  []string{strconv.FormatInt(int64(conf.VesselID), 10)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -481,11 +468,6 @@ func TestDeleteControl(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -507,7 +489,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Set control. No jwt",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -519,9 +501,9 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Wrong role in jwt",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -532,7 +514,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. User",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{vesselID},
+				query:  []int64{int64(conf.VesselID)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},
@@ -547,7 +529,7 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Bad vessel ids",
 			args: args{
 				method: http.MethodDelete,
-				query:  []string{strconv.FormatInt(vesselID, 10)},
+				query:  []string{strconv.FormatInt(int64(conf.VesselID), 10)},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtOperator,
 				},

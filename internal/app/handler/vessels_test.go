@@ -32,11 +32,6 @@ func TestAddVessel(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []string{"Test1 Vessel_" + timeID, "Test2 Vessel_" + timeID}
 
@@ -75,7 +70,7 @@ func TestAddVessel(t *testing.T) {
 				method: http.MethodPost,
 				body:   newVessels,
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -203,11 +198,6 @@ func TestDeleteVessel(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
@@ -251,7 +241,7 @@ func TestDeleteVessel(t *testing.T) {
 				method: http.MethodDelete,
 				body:   vessels.IDs(),
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -379,11 +369,6 @@ func TestRestoreVessel(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
@@ -428,7 +413,7 @@ func TestRestoreVessel(t *testing.T) {
 				method: http.MethodPatch,
 				body:   vessels.IDs(),
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -556,11 +541,6 @@ func TestGetVessel(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
@@ -603,7 +583,7 @@ func TestGetVessel(t *testing.T) {
 				method: http.MethodGet,
 				query:  map[string]interface{}{"vesselIDs": vessels.IDs()},
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
@@ -753,11 +733,6 @@ func TestUpdateVessel(t *testing.T) {
 
 	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
-	vesselID := int64(9110913)
-	claimsVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(vesselID), "")
-	jwtVessel, err := claimsVessel.Token()
-	require.NoError(t, err)
-
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
@@ -801,7 +776,7 @@ func TestUpdateVessel(t *testing.T) {
 				method: http.MethodPut,
 				body:   vessels,
 				headers: map[string]string{
-					"Authorization": "Bearer " + jwtVessel,
+					"Authorization": "Bearer " + conf.jwtVessel,
 				},
 			},
 			want: want{
