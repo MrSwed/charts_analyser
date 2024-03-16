@@ -31,6 +31,12 @@ func NewClaimOperator(conf *config.JWT, id UserID, name UserLogin) *ClaimsAuth {
 	}
 }
 
+func NewClaimAdmin(conf *config.JWT, id UserID, name UserLogin) *ClaimsAuth {
+	c := NewClaimOperator(conf, id, name)
+	c.Role = constant.RoleAdmin
+	return c
+}
+
 type ClaimsAuth struct {
 	jwt.RegisteredClaims
 	Name string        `json:"name"`
