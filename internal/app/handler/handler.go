@@ -27,6 +27,16 @@ func (h *Handler) Handler() *Handler {
 
 	opAw := CheckIsRole(constant.RoleOperator)
 	veAw := CheckIsRole(constant.RoleVessel)
+	admAw := CheckIsRole(constant.RoleAdmin)
+
+	operator := api.Group(constant.RouteUser)
+	operator.Use(admAw)
+	operator.Post("", h.AddUser())
+	operator.Put("", h.UpdateUser())
+	operator.Delete("", h.DeleteUsers())
+	operator.Patch("", h.RestoreUsers())
+
+	//api.Post(constant.RouteLogin, h.Login())
 
 	chart := api.Group(constant.RouteChart)
 	chart.Use(opAw)

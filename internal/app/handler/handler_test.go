@@ -44,7 +44,7 @@ func newEnvConfig() (c *testConfig) {
 	}
 	c = &testConfig{}
 	c.WithEnv().CleanSchemes()
-	c.jwtOperator, err = domain.NewClaimOperator(&c.JWT, 12, "Operator for test").Token()
+	c.jwtOperator, err = domain.NewClaimOperator(&c.JWT, 12, "User for test").Token()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func TestChartZones(t *testing.T) {
 			},
 		},
 		{
-			name: "Get vessel zones. Operator",
+			name: "Get vessel zones. User",
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
@@ -466,7 +466,7 @@ func TestVesselState(t *testing.T) {
 			},
 		},
 		{
-			name: "Control vessel. Operator",
+			name: "Control vessel. User",
 			args: args{
 				method: http.MethodPost,
 				query:  []int64{vesselID},
@@ -623,7 +623,7 @@ func TestMonitoredList(t *testing.T) {
 			},
 		},
 		{
-			name: "Monitor list. Operator",
+			name: "Monitor list. User",
 			args: args{
 				method: http.MethodGet,
 				headers: map[string]string{
@@ -753,7 +753,7 @@ func TestSetControl(t *testing.T) {
 			},
 		},
 		{
-			name: "Set control. Operator",
+			name: "Set control. User",
 			args: args{
 				method: http.MethodPost,
 				query:  []int64{vesselID},
@@ -918,7 +918,7 @@ func TestDeleteControl(t *testing.T) {
 			},
 		},
 		{
-			name: "Delete control. Operator",
+			name: "Delete control. User",
 			args: args{
 				method: http.MethodDelete,
 				query:  []int64{vesselID},

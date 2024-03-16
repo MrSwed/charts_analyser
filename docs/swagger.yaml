@@ -13,6 +13,16 @@ definitions:
       timestamp:
         type: string
     type: object
+  constant.Role:
+    enum:
+    - 1
+    - 2
+    - 4
+    type: integer
+    x-enum-varnames:
+    - RoleVessel
+    - RoleOperator
+    - RoleAdmin
   domain.CurrentZone:
     properties:
       timeIn:
@@ -63,6 +73,26 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  domain.UserChange:
+    properties:
+      id:
+        type: integer
+      login:
+        minLength: 6
+        type: string
+      password:
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/constant.Role'
+        enum:
+        - 2
+        - 4
+    required:
+    - login
+    - password
+    - role
     type: object
   domain.Vessel:
     properties:
@@ -378,6 +408,132 @@ paths:
       summary: Маршрут судна за указанный период
       tags:
       - Track
+  /user:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID операторов
+        in: body
+        name: UserNames
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Удаление операторов
+      tags:
+      - User
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID операторов
+        in: body
+        name: UserNames
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Восстановление оператора
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: данные пользователя
+        in: body
+        name: UserData
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserChange'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Добавление оператора
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Смена названия оператора, для не удаленных
+      parameters:
+      - description: данные пользователя
+        in: body
+        name: UserData
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserChange'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Изменение оператора
+      tags:
+      - User
   /vessels:
     delete:
       consumes:

@@ -6,4 +6,5 @@ const (
 	DBVessels          = "vessels"
 	DBControlLog       = "control_log"
 	DBControlDashboard = "control_dashboard"
+	DBUsers            = "users"
 )

@@ -11,6 +11,7 @@ type Service struct {
 	Chart
 	Monitor
 	Vessel
+	User
 }
 
 func NewService(r *repository.Repository, log *zap.Logger) *Service {
@@ -18,6 +19,7 @@ func NewService(r *repository.Repository, log *zap.Logger) *Service {
 		Chart:   NewChartService(r),
 		Monitor: NewMonitorService(r, log),
 		Vessel:  NewVesselService(r),
+		User:    NewUserService(r, log),
 	}
 }
 
@@ -34,6 +36,13 @@ type Vessel interface {
 	AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels domain.Vessels, err error)
 	UpdateVessels(ctx context.Context, vessels ...domain.Vessel) (savedVessels domain.Vessels, err error)
 	SetDeleteVessels(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error
+}
+
+type User interface {
+	GetUser(ctx context.Context, userID domain.UserID) (user domain.User, err error)
+	AddUser(ctx context.Context, userAdd domain.UserChange) (id domain.UserID, err error)
+	UpdateUser(ctx context.Context, user domain.UserChange) (err error)
+	SetDeletedUser(ctx context.Context, delete bool, userIDs ...domain.UserID) (err error)
 }
 
 type Monitor interface {

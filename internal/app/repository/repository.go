@@ -14,6 +14,7 @@ type Repository struct {
 	Monitor
 	Vessels
 	Log
+	User
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
@@ -22,6 +23,7 @@ func NewRepository(db *sqlx.DB) *Repository {
 		Monitor: NewMonitorDBRepository(db),
 		Vessels: NewVesselRepository(db),
 		Log:     NewLogRepository(db),
+		User:    NewUserRepository(db),
 	}
 }
 
@@ -38,6 +40,13 @@ type Vessels interface {
 	AddVessel(ctx context.Context, vesselNames ...domain.VesselName) (vessels domain.Vessels, err error)
 	SetDeleteVessels(ctx context.Context, delete bool, vesselIDS ...domain.VesselID) error
 	UpdateVessels(ctx context.Context, vessels ...domain.Vessel) (savedVessels domain.Vessels, err error)
+}
+
+type User interface {
+	GetUser(ctx context.Context, userID domain.UserID) (user domain.User, err error)
+	AddUser(ctx context.Context, user domain.UserDB) (id domain.UserID, err error)
+	UpdateUser(ctx context.Context, user domain.UserDB) (err error)
+	SetDeletedUser(ctx context.Context, delete bool, userIDs ...domain.UserID) (err error)
 }
 
 type Monitor interface {

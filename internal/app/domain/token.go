@@ -19,7 +19,7 @@ func NewClaimVessels(conf *config.JWT, id VesselID, name VesselName) *ClaimsAuth
 	}
 }
 
-func NewClaimOperator(conf *config.JWT, id OperatorID, name OperatorName) *ClaimsAuth {
+func NewClaimOperator(conf *config.JWT, id UserID, name UserLogin) *ClaimsAuth {
 	return &ClaimsAuth{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   id.String(),
