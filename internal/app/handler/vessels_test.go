@@ -4,17 +4,11 @@ import (
 	"bytes"
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
-	"charts_analyser/internal/app/handler"
-	"charts_analyser/internal/app/repository"
-	"charts_analyser/internal/app/service"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/url"
@@ -24,13 +18,6 @@ import (
 )
 
 func TestAddVessel(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []string{"Test1 Vessel_" + timeID, "Test2 Vessel_" + timeID}
@@ -190,19 +177,12 @@ func TestAddVessel(t *testing.T) {
 }
 
 func TestDeleteVessel(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
 	require.Equal(t, len(newVessels), len(vessels))
 
@@ -361,21 +341,14 @@ func TestDeleteVessel(t *testing.T) {
 }
 
 func TestRestoreVessel(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
-	err = s.Vessel.SetDeleteVessels(ctx, true, vessels.IDs()...)
+	err = serv.Vessel.SetDeleteVessels(ctx, true, vessels.IDs()...)
 	require.NoError(t, err)
 
 	type want struct {
@@ -533,19 +506,12 @@ func TestRestoreVessel(t *testing.T) {
 }
 
 func TestGetVessel(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
 	require.Equal(t, len(newVessels), len(vessels))
 	type want struct {
@@ -725,19 +691,12 @@ func TestGetVessel(t *testing.T) {
 }
 
 func TestUpdateVessel(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := s.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
 	require.Equal(t, len(newVessels), len(vessels))
 

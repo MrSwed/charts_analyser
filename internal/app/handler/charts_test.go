@@ -4,16 +4,10 @@ import (
 	"bytes"
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
-	"charts_analyser/internal/app/handler"
-	"charts_analyser/internal/app/repository"
-	"charts_analyser/internal/app/service"
 	"encoding/json"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
@@ -23,13 +17,6 @@ import (
 )
 
 func TestChartZones(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
@@ -202,13 +189,6 @@ func TestChartZones(t *testing.T) {
 }
 
 func TestChartVessels(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	zoneName := "zone_40"
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
@@ -365,14 +345,6 @@ func TestChartVessels(t *testing.T) {
 }
 
 func TestTrack(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
-
 	claimsUnknownVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(10000000000), "")
 	jwtUnknownVessel, err := claimsUnknownVessel.Token()
 	require.NoError(t, err)

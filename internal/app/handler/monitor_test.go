@@ -4,15 +4,9 @@ import (
 	"bytes"
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
-	"charts_analyser/internal/app/handler"
-	"charts_analyser/internal/app/repository"
-	"charts_analyser/internal/app/service"
 	"encoding/json"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
@@ -21,13 +15,6 @@ import (
 )
 
 func TestVesselState(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	vesselID := int64(9110913)
 
@@ -178,13 +165,6 @@ func TestVesselState(t *testing.T) {
 }
 
 func TestMonitoredList(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	type want struct {
 		code            int
@@ -300,13 +280,6 @@ func TestMonitoredList(t *testing.T) {
 }
 
 func TestSetControl(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	type want struct {
 		code            int
@@ -460,13 +433,6 @@ func TestSetControl(t *testing.T) {
 }
 
 func TestDeleteControl(t *testing.T) {
-	repo := repository.NewRepository(db)
-	logger, _ := zap.NewDevelopment()
-	s := service.NewService(repo, logger)
-	app := fiber.New()
-	app.Use(recover.New())
-
-	_ = handler.NewHandler(app, s, &conf.Config, logger).Handler()
 
 	type want struct {
 		code            int
