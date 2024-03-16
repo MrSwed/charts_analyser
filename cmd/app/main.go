@@ -67,7 +67,7 @@ func runServer(ctx context.Context) {
 	}))
 
 	r := repository.NewRepository(db)
-	s := service.NewService(r, logger)
+	s := service.NewService(r, &conf.JWT, logger)
 	handler.NewHandler(app, s, conf, logger).Handler()
 
 	graceShutdown.Add("APP", func(ctx context.Context) (err error) {

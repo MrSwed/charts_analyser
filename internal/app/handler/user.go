@@ -13,6 +13,50 @@ import (
 	"net/http"
 )
 
+// Login
+// @Tags        User
+// @Summary     Идентификация
+// @Description Получение токена
+// @Accept      json
+// @Produce     json
+// @Param       UserAuth   body     domain.LoginForm    true "Логин, пароль"
+// @Success     200        {string} string "JWT token"
+// @Failure     400
+// @Failure     401
+// @Failure     403
+// @Failure     500
+// @Router      /login [post]
+// @Security    BearerAuth
+func (h *Handler) Login() fiber.Handler {
+	return func(c *fiber.Ctx) (err error) {
+		var (
+			login domain.LoginForm
+		)
+		err = c.BodyParser(&login)
+		if err != nil && !errors.Is(err, io.EOF) {
+			c.Status(http.StatusBadRequest)
+			return nil
+		}
+
+		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
+		defer cancel()
+
+		result, err := h.s.User.Login(ctx, login)
+		if err != nil {
+			if errors.Is(err, myErr.ErrLogin) {
+				_, err = c.Status(http.StatusUnauthorized).WriteString(err.Error())
+				return
+			}
+
+			c.Status(http.StatusInternalServerError)
+			h.log.Error("Error add users", zap.Error(err), zap.Any("login", login))
+			return nil
+		}
+		_, err = c.Status(http.StatusOK).WriteString(result)
+		return
+	}
+}
+
 // AddUser
 // @Tags        User
 // @Summary     Добавление оператора
@@ -43,7 +87,11 @@ func (h *Handler) AddUser() fiber.Handler {
 
 		result, err := h.s.User.AddUser(ctx, user)
 		if err != nil {
-			if errors.As(err, &validator.ValidationErrors{}) || errors.Is(err, myErr.ErrDuplicateRecord) {
+			if errors.Is(err, myErr.ErrDuplicateRecord) {
+				_, err = c.Status(http.StatusConflict).WriteString(err.Error())
+				return
+			}
+			if errors.As(err, &validator.ValidationErrors{}) {
 				_, err = c.Status(http.StatusBadRequest).WriteString(err.Error())
 				return
 			}
@@ -86,7 +134,11 @@ func (h *Handler) UpdateUser() fiber.Handler {
 
 		err = h.s.User.UpdateUser(ctx, user)
 		if err != nil {
-			if errors.As(err, &validator.ValidationErrors{}) || errors.Is(err, myErr.ErrDuplicateRecord) {
+			if errors.Is(err, myErr.ErrDuplicateRecord) {
+				_, err = c.Status(http.StatusConflict).WriteString(err.Error())
+				return
+			}
+			if errors.As(err, &validator.ValidationErrors{}) {
 				_, err = c.Status(http.StatusBadRequest).WriteString(err.Error())
 				return
 			}

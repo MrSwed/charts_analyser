@@ -19,22 +19,24 @@ func NewClaimVessels(conf *config.JWT, id VesselID, name VesselName) *ClaimsAuth
 	}
 }
 
-func NewClaimOperator(conf *config.JWT, id UserID, name UserLogin) *ClaimsAuth {
+func NewClaimOperator(conf *config.JWT, id UserID, login UserLogin) *ClaimsAuth {
+	return NewClaimUser(conf, id, login, constant.RoleOperator)
+}
+
+func NewClaimAdmin(conf *config.JWT, id UserID, login UserLogin) *ClaimsAuth {
+	return NewClaimUser(conf, id, login, constant.RoleAdmin)
+}
+
+func NewClaimUser(conf *config.JWT, id UserID, login UserLogin, role constant.Role) *ClaimsAuth {
 	return &ClaimsAuth{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   id.String(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(conf.TokenLifeTime) * time.Second)),
 		},
-		Name: name.String(),
-		Role: constant.RoleOperator,
+		Name: login.String(),
+		Role: role,
 		key:  conf.JWTSigningKey,
 	}
-}
-
-func NewClaimAdmin(conf *config.JWT, id UserID, name UserLogin) *ClaimsAuth {
-	c := NewClaimOperator(conf, id, name)
-	c.Role = constant.RoleAdmin
-	return c
 }
 
 type ClaimsAuth struct {

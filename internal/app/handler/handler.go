@@ -22,6 +22,9 @@ func NewHandler(app *fiber.App, s *service.Service, conf *config.Config, log *za
 // Handler init routes
 func (h *Handler) Handler() *Handler {
 
+	login := h.app.Group(constant.RouteAPI + constant.RouteLogin)
+	login.Post("", h.Login())
+
 	api := h.app.Group(constant.RouteAPI)
 	api.Use(GetAccessWare(&h.conf.JWT))
 
@@ -35,8 +38,6 @@ func (h *Handler) Handler() *Handler {
 	operator.Put("", h.UpdateUser())
 	operator.Delete("", h.DeleteUsers())
 	operator.Patch("", h.RestoreUsers())
-
-	//api.Post(constant.RouteLogin, h.Login())
 
 	chart := api.Group(constant.RouteChart)
 	chart.Use(opAw)

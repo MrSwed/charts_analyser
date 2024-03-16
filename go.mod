@@ -19,6 +19,7 @@ require (
 	github.com/swaggo/fiber-swagger v1.3.0
 	github.com/swaggo/swag v1.16.3
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.19.0
 )
 
 require (
@@ -57,7 +58,6 @@ require (
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/exp v0.0.0-20230807204917-050eac23e9de // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect

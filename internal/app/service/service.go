@@ -1,6 +1,7 @@
 package service
 
 import (
+	"charts_analyser/internal/app/config"
 	"charts_analyser/internal/app/domain"
 	"charts_analyser/internal/app/repository"
 	"context"
@@ -14,12 +15,12 @@ type Service struct {
 	User
 }
 
-func NewService(r *repository.Repository, log *zap.Logger) *Service {
+func NewService(r *repository.Repository, conf *config.JWT, log *zap.Logger) *Service {
 	return &Service{
 		Chart:   NewChartService(r),
 		Monitor: NewMonitorService(r, log),
 		Vessel:  NewVesselService(r),
-		User:    NewUserService(r, log),
+		User:    NewUserService(r, conf, log),
 	}
 }
 
@@ -39,7 +40,8 @@ type Vessel interface {
 }
 
 type User interface {
-	GetUser(ctx context.Context, userID domain.UserID) (user domain.User, err error)
+	Login(ctx context.Context, user domain.LoginForm) (token string, err error)
+	GetUser(ctx context.Context, login domain.UserLogin) (user *domain.UserDB, err error)
 	AddUser(ctx context.Context, userAdd domain.UserChange) (id domain.UserID, err error)
 	UpdateUser(ctx context.Context, user domain.UserChange) (err error)
 	SetDeletedUser(ctx context.Context, delete bool, userIDs ...domain.UserID) (err error)

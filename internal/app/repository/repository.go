@@ -43,7 +43,7 @@ type Vessels interface {
 }
 
 type User interface {
-	GetUser(ctx context.Context, userID domain.UserID) (user domain.User, err error)
+	GetUser(ctx context.Context, login domain.UserLogin) (user *domain.UserDB, err error)
 	AddUser(ctx context.Context, user domain.UserDB) (id domain.UserID, err error)
 	UpdateUser(ctx context.Context, user domain.UserDB) (err error)
 	SetDeletedUser(ctx context.Context, delete bool, userIDs ...domain.UserID) (err error)

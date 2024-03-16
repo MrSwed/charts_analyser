@@ -5,7 +5,8 @@ const (
 
 	RouteAPI = "/api"
 
-	RouteUser = "/user"
+	RouteLogin = "/login"
+	RouteUser  = "/user"
 
 	RouteChart   = "/chart"
 	RouteVessels = "/vessels"

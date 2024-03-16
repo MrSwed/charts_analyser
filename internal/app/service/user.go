@@ -1,6 +1,7 @@
 package service
 
 import (
+	"charts_analyser/internal/app/config"
 	"charts_analyser/internal/app/constant"
 	"charts_analyser/internal/app/domain"
 	myErr "charts_analyser/internal/app/error"
@@ -16,7 +17,7 @@ import (
 	"regexp"
 )
 
-func NewUserService(r *repository.Repository, log *zap.Logger) *UserService {
+func NewUserService(r *repository.Repository, conf *config.JWT, log *zap.Logger) *UserService {
 	validate := validator.New()
 
 	err := validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
@@ -36,16 +37,33 @@ func NewUserService(r *repository.Repository, log *zap.Logger) *UserService {
 		log.Error("RegisterValidation", zap.Error(err))
 	}
 
-	return &UserService{r: r, validate: validate}
+	return &UserService{r: r, validate: validate, conf: conf}
 }
 
 type UserService struct {
 	r        *repository.Repository
 	validate *validator.Validate
+	conf     *config.JWT
 }
 
-func (s *UserService) GetUser(ctx context.Context, userID domain.UserID) (user domain.User, err error) {
-	user, err = s.r.User.GetUser(ctx, userID)
+func (s *UserService) Login(ctx context.Context, userLogin domain.LoginForm) (token string, err error) {
+	var user *domain.UserDB
+	if user, err = s.r.User.GetUser(ctx, userLogin.Login); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = myErr.ErrLogin
+		}
+		return
+	}
+	if err = bcrypt.CompareHashAndPassword(user.Hash, []byte(userLogin.Password)); err != nil {
+		err = myErr.ErrLogin
+		return
+	}
+	token, err = domain.NewClaimUser(s.conf, user.ID, user.Login, user.Role).Token()
+	return
+}
+
+func (s *UserService) GetUser(ctx context.Context, login domain.UserLogin) (user *domain.UserDB, err error) {
+	user, err = s.r.User.GetUser(ctx, login)
 	if errors.Is(err, sql.ErrNoRows) {
 		err = myErr.ErrNotExist
 	}
@@ -61,9 +79,9 @@ func (s *UserService) AddUser(ctx context.Context, user domain.UserChange) (id d
 		return
 	}
 	userDB := domain.UserDB{
-		User: domain.User{Login: user.Login},
-		Hash: hash,
-		Role: user.Role,
+		Login: user.Login,
+		Hash:  hash,
+		Role:  user.Role,
 	}
 
 	if id, err = s.r.User.AddUser(ctx, userDB); err != nil {
@@ -77,7 +95,7 @@ func (s *UserService) AddUser(ctx context.Context, user domain.UserChange) (id d
 
 func (s *UserService) UpdateUser(ctx context.Context, user domain.UserChange) (err error) {
 	if err = s.validate.VarCtx(ctx, user.ID, "required,gt=0"); err != nil {
-		return fmt.Errorf("validation for 'id' failed%w", validator.ValidationErrors{})
+		return fmt.Errorf("field 'id' required%w", validator.ValidationErrors{})
 	}
 	if err = s.validate.Struct(user); err != nil {
 		return
@@ -87,9 +105,10 @@ func (s *UserService) UpdateUser(ctx context.Context, user domain.UserChange) (e
 		return
 	}
 	userDB := domain.UserDB{
-		User: domain.User{Login: user.Login, ID: *user.ID},
-		Hash: hash,
-		Role: user.Role,
+		ID:    *user.ID,
+		Login: user.Login,
+		Hash:  hash,
+		Role:  user.Role,
 	}
 	if err = s.r.User.UpdateUser(ctx, userDB); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
