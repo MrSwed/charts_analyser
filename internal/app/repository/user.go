@@ -80,11 +80,14 @@ func (r *UserRepo) UpdateUser(ctx context.Context, user domain.UserDB) (err erro
 			"modified_at": modifiedAt,
 		}).
 		Where(sqrl.Eq{"id": user.ID}).
+		Suffix("returning id").
 		ToSql(); err != nil {
 		return
 	}
 
-	_, err = r.db.ExecContext(ctx, sqlStr, args...)
+	var updatedID int
+	err = r.db.GetContext(ctx, &updatedID, sqlStr, args...)
+
 	return
 }
 

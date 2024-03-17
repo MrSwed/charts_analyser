@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -87,6 +88,8 @@ func (s *UserService) AddUser(ctx context.Context, user domain.UserChange) (id d
 	if id, err = s.r.User.AddUser(ctx, userDB); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
 			err = myErr.ErrDuplicateRecord
+		} else if pgerr, ok := err.(*pq.Error); ok && pgerr.Code == "23505" {
+			err = myErr.ErrDuplicateRecord
 		}
 	}
 
@@ -113,6 +116,8 @@ func (s *UserService) UpdateUser(ctx context.Context, user domain.UserChange) (e
 	if err = s.r.User.UpdateUser(ctx, userDB); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
 			err = myErr.ErrDuplicateRecord
+		} else if errors.Is(err, sql.ErrNoRows) {
+			err = myErr.ErrNotExist
 		}
 	}
 	return
