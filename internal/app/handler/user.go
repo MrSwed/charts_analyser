@@ -68,6 +68,7 @@ func (h *Handler) Login() fiber.Handler {
 // @Failure     400
 // @Failure     401
 // @Failure     403
+// @Failure     409
 // @Failure     500
 // @Router      /user [post]
 // @Security    BearerAuth
@@ -115,6 +116,8 @@ func (h *Handler) AddUser() fiber.Handler {
 // @Failure     400
 // @Failure     401
 // @Failure     403
+// @Failure     404
+// @Failure     409
 // @Failure     500
 // @Router      /user [put]
 // @Security    BearerAuth
@@ -134,6 +137,10 @@ func (h *Handler) UpdateUser() fiber.Handler {
 
 		err = h.s.User.UpdateUser(ctx, user)
 		if err != nil {
+			if errors.Is(err, myErr.ErrNotExist) {
+				c.Status(http.StatusNotFound)
+				return nil
+			}
 			if errors.Is(err, myErr.ErrDuplicateRecord) {
 				_, err = c.Status(http.StatusConflict).WriteString(err.Error())
 				return

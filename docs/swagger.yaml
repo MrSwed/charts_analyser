@@ -74,6 +74,17 @@ definitions:
           type: string
         type: array
     type: object
+  domain.LoginForm:
+    properties:
+      login:
+        minLength: 6
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    - password
+    type: object
   domain.UserChange:
     properties:
       id:
@@ -202,6 +213,38 @@ paths:
       summary: список морских карт
       tags:
       - Chart
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Получение токена
+      parameters:
+      - description: Логин, пароль
+        in: body
+        name: UserAuth
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Идентификация
+      tags:
+      - User
   /monitor:
     delete:
       consumes:
@@ -496,6 +539,8 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
+        "409":
+          description: Conflict
         "500":
           description: Internal Server Error
       security:
@@ -527,6 +572,10 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: Conflict
         "500":
           description: Internal Server Error
       security:
