@@ -17,7 +17,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) GetUser(ctx context.Context, login domain.UserLogin) (user *domain.UserDB, err error) {
+func (r *UserRepo) GetUserByLogin(ctx context.Context, login domain.UserLogin) (user *domain.UserDB, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
@@ -25,7 +25,8 @@ func (r *UserRepo) GetUser(ctx context.Context, login domain.UserLogin) (user *d
 	user = new(domain.UserDB)
 	if sqlStr, args, err = sq.Select("id", "login", "hash", "created_at", "is_deleted", "role").
 		From(constant.DBUsers).
-		Where("login = $1 and is_deleted is not true", login).
+		Where(sqrl.Eq{"login": login}).
+		Where("is_deleted is not true").
 		ToSql(); err != nil {
 		return
 	}

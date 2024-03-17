@@ -49,7 +49,7 @@ type UserService struct {
 
 func (s *UserService) Login(ctx context.Context, userLogin domain.LoginForm) (token string, err error) {
 	var user *domain.UserDB
-	if user, err = s.r.User.GetUser(ctx, userLogin.Login); err != nil {
+	if user, err = s.r.User.GetUserByLogin(ctx, userLogin.Login); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = myErr.ErrLogin
 		}
@@ -64,7 +64,7 @@ func (s *UserService) Login(ctx context.Context, userLogin domain.LoginForm) (to
 }
 
 func (s *UserService) GetUser(ctx context.Context, login domain.UserLogin) (user *domain.UserDB, err error) {
-	user, err = s.r.User.GetUser(ctx, login)
+	user, err = s.r.User.GetUserByLogin(ctx, login)
 	if errors.Is(err, sql.ErrNoRows) {
 		err = myErr.ErrNotExist
 	}
