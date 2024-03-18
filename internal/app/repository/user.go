@@ -35,7 +35,7 @@ func (r *UserRepo) GetUserByLogin(ctx context.Context, login domain.UserLogin) (
 	return
 }
 
-func (r *UserRepo) AddUser(ctx context.Context, user domain.UserDB) (id domain.UserID, err error) {
+func (r *UserRepo) AddUser(ctx context.Context, user *domain.UserDB) (id domain.UserID, err error) {
 	var (
 		sqlStr string
 		args   []interface{}
@@ -66,20 +66,23 @@ func (r *UserRepo) AddUser(ctx context.Context, user domain.UserDB) (id domain.U
 	return
 }
 
-func (r *UserRepo) UpdateUser(ctx context.Context, user domain.UserDB) (err error) {
+func (r *UserRepo) UpdateUser(ctx context.Context, user *domain.UserDB) (err error) {
 	var (
 		sqlStr string
 		args   []interface{}
 	)
 
 	modifiedAt := time.Now()
+	updMap := map[string]interface{}{
+		"login":       user.Login,
+		"role":        user.Role,
+		"modified_at": modifiedAt,
+	}
+	if len(user.Hash) > 0 {
+		updMap["hash"] = user.Hash
+	}
 	if sqlStr, args, err = sq.Update(constant.DBUsers).
-		SetMap(map[string]interface{}{
-			"login":       user.Login,
-			"role":        user.Role,
-			"hash":        user.Hash,
-			"modified_at": modifiedAt,
-		}).
+		SetMap(updMap).
 		Where(sqrl.Eq{"id": user.ID}).
 		Suffix("returning id").
 		ToSql(); err != nil {

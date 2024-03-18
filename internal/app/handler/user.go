@@ -86,7 +86,7 @@ func (h *Handler) AddUser() fiber.Handler {
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
-		result, err := h.s.User.AddUser(ctx, user)
+		result, err := h.s.User.AddUser(ctx, &user)
 		if err != nil {
 			if errors.Is(err, myErr.ErrDuplicateRecord) {
 				_, err = c.Status(http.StatusConflict).WriteString(err.Error())
@@ -135,7 +135,7 @@ func (h *Handler) UpdateUser() fiber.Handler {
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
 		defer cancel()
 
-		err = h.s.User.UpdateUser(ctx, user)
+		err = h.s.User.UpdateUser(ctx, &user)
 		if err != nil {
 			if errors.Is(err, myErr.ErrNotExist) {
 				c.Status(http.StatusNotFound)

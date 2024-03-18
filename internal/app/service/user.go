@@ -14,7 +14,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	"regexp"
 )
 
@@ -55,7 +54,7 @@ func (s *UserService) Login(ctx context.Context, userLogin domain.LoginForm) (to
 		}
 		return
 	}
-	if err = bcrypt.CompareHashAndPassword(user.Hash, []byte(userLogin.Password)); err != nil {
+	if !user.Hash.IsValidPassword(userLogin.Password) {
 		err = myErr.ErrLogin
 		return
 	}
@@ -71,20 +70,14 @@ func (s *UserService) GetUser(ctx context.Context, login domain.UserLogin) (user
 	return
 }
 
-func (s *UserService) AddUser(ctx context.Context, user domain.UserChange) (id domain.UserID, err error) {
+func (s *UserService) AddUser(ctx context.Context, user *domain.UserChange) (id domain.UserID, err error) {
 	if err = s.validate.Struct(user); err != nil {
 		return
 	}
-	var hash []byte
-	if hash, err = bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost); err != nil {
+	var userDB *domain.UserDB
+	if userDB, err = domain.NewUserDB(0, user.Login, user.Password, user.Role); err != nil {
 		return
 	}
-	userDB := domain.UserDB{
-		Login: user.Login,
-		Hash:  hash,
-		Role:  user.Role,
-	}
-
 	if id, err = s.r.User.AddUser(ctx, userDB); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
 			err = myErr.ErrDuplicateRecord
@@ -96,23 +89,18 @@ func (s *UserService) AddUser(ctx context.Context, user domain.UserChange) (id d
 	return
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, user domain.UserChange) (err error) {
+func (s *UserService) UpdateUser(ctx context.Context, user *domain.UserChange) (err error) {
 	if err = s.validate.VarCtx(ctx, user.ID, "required,gt=0"); err != nil {
 		return fmt.Errorf("field 'id' required%w", validator.ValidationErrors{})
 	}
 	if err = s.validate.Struct(user); err != nil {
 		return
 	}
-	var hash []byte
-	if hash, err = bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost); err != nil {
+	var userDB *domain.UserDB
+	if userDB, err = domain.NewUserDB(*user.ID, user.Login, user.Password, user.Role); err != nil {
 		return
 	}
-	userDB := domain.UserDB{
-		ID:    *user.ID,
-		Login: user.Login,
-		Hash:  hash,
-		Role:  user.Role,
-	}
+
 	if err = s.r.User.UpdateUser(ctx, userDB); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
 			err = myErr.ErrDuplicateRecord
@@ -121,7 +109,6 @@ func (s *UserService) UpdateUser(ctx context.Context, user domain.UserChange) (e
 		}
 	}
 	return
-
 }
 
 func (s *UserService) SetDeletedUser(ctx context.Context, delete bool, userIDs ...domain.UserID) (err error) {

@@ -19,21 +19,17 @@ func TestAddUser(t *testing.T) {
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newUser := domain.UserChange{
-		LoginForm: domain.LoginForm{
-			Login:    domain.UserLogin("Test1_user_" + timeID),
-			Password: "Pa$$w0rd",
-		},
-		Role: 2,
+		Login:    domain.UserLogin("Test1_user_" + timeID),
+		Password: &[]domain.Password{"Pa$$w0rd"}[0],
+		Role:     2,
 	}
 	existUser := domain.UserChange{
-		LoginForm: domain.LoginForm{
-			Login:    domain.UserLogin("Test2_user_" + timeID),
-			Password: "Pa$$w0rd1",
-		},
-		Role: 2,
+		Login:    domain.UserLogin("Test2_user_" + timeID),
+		Password: &[]domain.Password{"Pa$$w0rd1"}[0],
+		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, existUser)
+	id, err := serv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -111,8 +107,9 @@ func TestAddUser(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: domain.UserChange{
-					LoginForm: existUser.LoginForm,
-					Role:      2,
+					Login:    existUser.Login,
+					Password: existUser.Password,
+					Role:     2,
 				},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtAdmin,
@@ -140,11 +137,9 @@ func TestAddUser(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: domain.UserChange{
-					LoginForm: domain.LoginForm{
-						Login:    domain.UserLogin("Test2_user_bad_pass" + timeID),
-						Password: "password",
-					},
-					Role: 2,
+					Login:    domain.UserLogin("Test2_user_bad_pass" + timeID),
+					Password: &[]domain.Password{"password"}[0],
+					Role:     2,
 				},
 				headers: map[string]string{
 					"Authorization": "Bearer " + conf.jwtAdmin,
@@ -160,11 +155,9 @@ func TestAddUser(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: domain.UserChange{
-					LoginForm: domain.LoginForm{
-						Login:    domain.UserLogin("Test3_user_bad_role" + timeID),
-						Password: "password",
-					},
-					Role: 3,
+					Login:    domain.UserLogin("Test3_user_bad_role" + timeID),
+					Password: &[]domain.Password{"password"}[0],
+					Role:     3,
 				},
 
 				headers: map[string]string{
@@ -237,14 +230,12 @@ func TestDeleteUser(t *testing.T) {
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	existUser := domain.UserChange{
-		LoginForm: domain.LoginForm{
-			Login:    domain.UserLogin("Test1_delete_user_" + timeID),
-			Password: "Pa$$w0rd",
-		},
-		Role: 2,
+		Login:    domain.UserLogin("Test1_delete_user_" + timeID),
+		Password: &[]domain.Password{"Pa$$w0rd"}[0],
+		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, existUser)
+	id, err := serv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -390,14 +381,12 @@ func TestRestoreUser(t *testing.T) {
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	existUser := domain.UserChange{
-		LoginForm: domain.LoginForm{
-			Login:    domain.UserLogin("Test1_delete_user_" + timeID),
-			Password: "Pa$$w0rd",
-		},
-		Role: 2,
+		Login:    domain.UserLogin("Test1_delete_user_" + timeID),
+		Password: &[]domain.Password{"Pa$$w0rd"}[0],
+		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, existUser)
+	id, err := serv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 	err = serv.User.SetDeletedUser(ctx, true, id)
@@ -545,14 +534,12 @@ func TestUpdateUser(t *testing.T) {
 
 	timeID := time.Now().Format(time.RFC3339Nano)
 	existUser := domain.UserChange{
-		LoginForm: domain.LoginForm{
-			Login:    domain.UserLogin("Test2_user_" + timeID),
-			Password: "Pa$$w0rd1",
-		},
-		Role: 2,
+		Login:    domain.UserLogin("Test2_user_" + timeID),
+		Password: &[]domain.Password{"Pa$$w0rd1"}[0],
+		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, existUser)
+	id, err := serv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -574,7 +561,7 @@ func TestUpdateUser(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Update users. No jwt",
+			name: "Update user. No jwt",
 			args: args{
 				method: http.MethodPut,
 				body:   existUser,
@@ -586,7 +573,7 @@ func TestUpdateUser(t *testing.T) {
 			},
 		},
 		{
-			name: "Update users. Wrong role in jwt",
+			name: "Update user. Wrong role in jwt",
 			args: args{
 				method: http.MethodPut,
 				body:   existUser,
@@ -599,7 +586,7 @@ func TestUpdateUser(t *testing.T) {
 			},
 		},
 		{
-			name: "Update users. OK",
+			name: "Update user. OK",
 			args: args{
 				method: http.MethodPut,
 				body:   existUser,
@@ -614,7 +601,26 @@ func TestUpdateUser(t *testing.T) {
 			},
 		},
 		{
-			name: "Update users. No body data",
+			name: "Update user. Without password, OK",
+			args: args{
+				method: http.MethodPut,
+				body: domain.UserChange{
+					ID:    existUser.ID,
+					Login: existUser.Login,
+					Role:  2,
+				},
+				headers: map[string]string{
+					"Authorization": "Bearer " + conf.jwtAdmin,
+				},
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Update user. No body data",
 			args: args{
 				method: http.MethodPut,
 				headers: map[string]string{
@@ -626,7 +632,7 @@ func TestUpdateUser(t *testing.T) {
 			},
 		},
 		{
-			name: "Update users. Bad body data.",
+			name: "Update user. Bad body data.",
 			args: args{
 				method: http.MethodPut,
 				body:   map[string]interface{}{"userIDs": []interface{}{12.12, "user name", 1555444}},
@@ -639,16 +645,14 @@ func TestUpdateUser(t *testing.T) {
 			},
 		},
 		{
-			name: "Update users. Not exist.",
+			name: "Update user. Not exist.",
 			args: args{
 				method: http.MethodPut,
 				body: domain.UserChange{
-					LoginForm: domain.LoginForm{
-						Login:    domain.UserLogin("SomeNotExistUserLogin"),
-						Password: "Pa$$w0rd12",
-					},
-					Role: 2,
-					ID:   &[]domain.UserID{1005000000}[0],
+					Login:    domain.UserLogin("SomeNotExistUserLogin"),
+					Password: &[]domain.Password{"Pa$$w0rd12"}[0],
+					Role:     2,
+					ID:       &[]domain.UserID{1005000000}[0],
 				},
 
 				headers: map[string]string{
