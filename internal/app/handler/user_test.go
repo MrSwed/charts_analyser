@@ -718,3 +718,138 @@ func TestUpdateUser(t *testing.T) {
 		})
 	}
 }
+
+func TestLogin(t *testing.T) {
+
+	timeID := time.Now().Format(time.RFC3339Nano)
+	notExistLogin := domain.LoginForm{
+		Login:    domain.UserLogin("Test1_user_" + timeID),
+		Password: domain.Password("Pa$$w0rd"),
+	}
+	existLogin := domain.LoginForm{
+		Login:    domain.UserLogin("Test2_user_" + timeID),
+		Password: domain.Password("Pa$$w0rd"),
+	}
+	existUser := domain.UserChange{
+		Login:    existLogin.Login,
+		Password: &existLogin.Password,
+		Role:     2,
+	}
+	ctx := context.Background()
+	id, err := serv.AddUser(ctx, &existUser)
+	require.NoError(t, err)
+	existUser.ID = &id
+
+	type want struct {
+		code            int
+		responseLen     *bool
+		response        *string
+		responseContain string
+		contentType     string
+	}
+	type args struct {
+		method  string
+		body    interface{}
+		headers map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Login. No data",
+			args: args{
+				method: http.MethodPost,
+			},
+			want: want{
+				code: http.StatusUnauthorized,
+			},
+		},
+		{
+			name: "Login. NotExist",
+			args: args{
+				method: http.MethodPost,
+				body:   notExistLogin,
+			},
+			want: want{
+				code: http.StatusUnauthorized,
+			},
+		},
+		{
+			name: "Login. OK",
+			args: args{
+				method: http.MethodPost,
+				body:   existLogin,
+			},
+			want: want{
+				code:        http.StatusOK,
+				responseLen: &[]bool{true}[0],
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Login. Bad body data",
+			args: args{
+				method: http.MethodPost,
+				body:   []interface{}{12.12, "user name"},
+			},
+			want: want{
+				code: http.StatusBadRequest,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bodyJSON, _ := json.Marshal(test.args.body)
+			request, err := http.NewRequest(test.args.method, constant.RouteAPI+constant.RouteLogin, bytes.NewReader(bodyJSON))
+			require.NoError(t, err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if len(test.args.headers) > 0 {
+				for k, v := range test.args.headers {
+					request.Header.Set(k, v)
+				}
+			}
+
+			res, err := app.Test(request)
+			require.NoError(t, err)
+
+			var resBody []byte
+			assert.Equal(t, test.want.code, res.StatusCode)
+			func() {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					require.NoError(t, err)
+				}(res.Body)
+				resBody, err = io.ReadAll(res.Body)
+				require.NoError(t, err)
+			}()
+
+			if test.want.responseLen != nil {
+				if *test.want.responseLen {
+					assert.Greater(t, len(resBody), 0)
+				} else {
+					assert.Equal(t, len(resBody), 0)
+				}
+			}
+
+			if test.want.contentType != "" {
+				assert.Contains(t, res.Header.Get("Content-Type"), test.want.contentType)
+			}
+
+			if test.want.responseContain != "" {
+				cont := string(resBody)
+				assert.Contains(t, cont, test.want.responseContain)
+			}
+
+			if test.want.response != nil {
+				cont := strings.TrimSpace(string(resBody))
+				assert.Equal(t, cont, *test.want.response)
+			}
+		})
+	}
+}

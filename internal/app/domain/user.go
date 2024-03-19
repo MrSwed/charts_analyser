@@ -2,6 +2,7 @@ package domain
 
 import (
 	"charts_analyser/internal/app/constant"
+	"database/sql/driver"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"time"
@@ -55,6 +56,24 @@ type Hash []byte
 func (h Hash) IsValidPassword(p Password) bool {
 	err := bcrypt.CompareHashAndPassword(h, []byte(p))
 	return err == nil
+}
+
+func (h *Hash) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	switch b := src.(type) {
+	case []byte:
+		*h = b
+	case string:
+		*h = []byte(b)
+	}
+	return nil
+}
+
+func (h Hash) Value() (b driver.Value, err error) {
+	b = []byte(h)
+	return b, nil
 }
 
 // Input

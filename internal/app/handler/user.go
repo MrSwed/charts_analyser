@@ -49,7 +49,7 @@ func (h *Handler) Login() fiber.Handler {
 			}
 
 			c.Status(http.StatusInternalServerError)
-			h.log.Error("Error add users", zap.Error(err), zap.Any("login", login))
+			h.log.Error("Error login", zap.Error(err), zap.Any("login", login))
 			return nil
 		}
 		_, err = c.Status(http.StatusOK).WriteString(result)

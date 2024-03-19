@@ -22,8 +22,7 @@ func NewHandler(app *fiber.App, s *service.Service, conf *config.Config, log *za
 // Handler init routes
 func (h *Handler) Handler() *Handler {
 
-	login := h.app.Group(constant.RouteAPI + constant.RouteLogin)
-	login.Post("", h.Login())
+	h.app.Post(constant.RouteAPI+constant.RouteLogin, h.Login())
 
 	api := h.app.Group(constant.RouteAPI)
 	api.Use(GetAccessWare(&h.conf.JWT))

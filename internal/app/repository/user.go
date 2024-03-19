@@ -23,7 +23,7 @@ func (r *UserRepo) GetUserByLogin(ctx context.Context, login domain.UserLogin) (
 		args   []interface{}
 	)
 	user = new(domain.UserDB)
-	if sqlStr, args, err = sq.Select("id", "login", "hash", "created_at", "is_deleted", "role").
+	if sqlStr, args, err = sq.Select("id", "login", "hash", "created_at", "modified_at", "is_deleted", "role").
 		From(constant.DBUsers).
 		Where(sqrl.Eq{"login": login}).
 		Where("is_deleted is not true").
