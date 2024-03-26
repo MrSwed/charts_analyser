@@ -1,0 +1,760 @@
+basePath: /api/
+definitions:
+  charts_analyser_internal_app_domain.Track:
+    properties:
+      id:
+        type: integer
+      location:
+        items:
+          type: number
+        type: array
+      name:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  constant.Role:
+    enum:
+    - 1
+    - 2
+    - 4
+    type: integer
+    x-enum-varnames:
+    - RoleVessel
+    - RoleOperator
+    - RoleAdmin
+  domain.CurrentZone:
+    properties:
+      timeIn:
+        type: string
+      zones:
+        items:
+          type: string
+        type: array
+    type: object
+  domain.Duration:
+    enum:
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    type: integer
+    x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
+  domain.InputVesselsInterval:
+    properties:
+      finish:
+        type: string
+      start:
+        type: string
+      vesselIDs:
+        items:
+          type: integer
+        type: array
+    type: object
+  domain.InputZones:
+    properties:
+      finish:
+        type: string
+      start:
+        type: string
+      zoneNames:
+        items:
+          type: string
+        type: array
+    type: object
+  domain.LoginForm:
+    properties:
+      login:
+        minLength: 6
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  domain.UserChange:
+    properties:
+      id:
+        type: integer
+      login:
+        minLength: 6
+        type: string
+      password:
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/constant.Role'
+        enum:
+        - 2
+        - 4
+    required:
+    - login
+    - password
+    - role
+    type: object
+  domain.Vessel:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.VesselState:
+    properties:
+      control:
+        type: boolean
+      controlEnd:
+        type: string
+      controlStart:
+        type: string
+      currentZone:
+        $ref: '#/definitions/domain.CurrentZone'
+      id:
+        type: integer
+      location:
+        items:
+          type: number
+        type: array
+      name:
+        type: string
+      timestamp:
+        type: string
+      zoneDuration:
+        $ref: '#/definitions/domain.Duration'
+    type: object
+host: localhost:3000
+info:
+  contact: {}
+  title: 'Charts analyser: web-service API'
+  version: "1.0"
+paths:
+  /chart/vessels:
+    post:
+      consumes:
+      - application/json
+      description: которые пересекали указанные морские карты в заданный временной
+        промежуток.
+      parameters:
+      - description: 'Входные параметры: идентификаторы карт, стартовая дата, конечная
+          дата.'
+        in: body
+        name: InputZones
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputZones'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: список судов
+      tags:
+      - Chart
+  /chart/zones:
+    post:
+      consumes:
+      - application/json
+      description: которые пересекались заданными в запросе судами в заданный временной
+        промежуток.
+      parameters:
+      - description: 'Входные параметры: идентификаторы судов, стартовая дата, конечная
+          дата.'
+        in: body
+        name: InputVesselsInterval
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InputVesselsInterval'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: список морских карт
+      tags:
+      - Chart
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Получение токена
+      parameters:
+      - description: Логин, пароль
+        in: body
+        name: UserAuth
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Идентификация
+      tags:
+      - User
+  /monitor:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Снять судно с контроля
+      tags:
+      - Monitor
+    get:
+      consumes:
+      - application/json
+      description: поставленных на мониторинг
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Список судов
+      tags:
+      - Monitor
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Поставить судно на контроль
+      tags:
+      - Monitor
+  /monitor/state:
+    post:
+      consumes:
+      - application/json
+      description: для выбранных судов, стоящих на мониторинге
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselIDs
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            items:
+              $ref: '#/definitions/domain.VesselState'
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: no data yet
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Текущие данные
+      tags:
+      - Monitor
+  /track:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'Bearer: JWT claims must have: id key used as vesselID and role:
+          1'
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: '[lon, lat]'
+        in: body
+        name: Point
+        required: true
+        schema:
+          items:
+            type: number
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Запись трека судна
+      tags:
+      - Track
+  /track/{id}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'ID Судна '
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: query
+        name: finish
+        type: string
+      - in: query
+        name: start
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/charts_analyser_internal_app_domain.Track'
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Маршрут судна за указанный период
+      tags:
+      - Track
+  /user:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID операторов
+        in: body
+        name: UserNames
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Удаление операторов
+      tags:
+      - User
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID операторов
+        in: body
+        name: UserNames
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Восстановление оператора
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: данные пользователя
+        in: body
+        name: UserData
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserChange'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "409":
+          description: Conflict
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Добавление оператора
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Смена названия оператора, для не удаленных
+      parameters:
+      - description: данные пользователя
+        in: body
+        name: UserData
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserChange'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: Conflict
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Изменение оператора
+      tags:
+      - User
+  /vessels:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Удаление судна
+      tags:
+      - Vessel
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: vesselIDs
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Информация о судах
+      tags:
+      - Vessel
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: список ID Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Восстановление судна
+      tags:
+      - Vessel
+    post:
+      consumes:
+      - application/json
+      description: 'Добавляет новые, возвращает все: и добавленные и существующие,
+        кроме удаленных'
+      parameters:
+      - description: список названий Судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Добавление судна
+      tags:
+      - Vessel
+    put:
+      consumes:
+      - application/json
+      description: Смена названия судна, для не удаленных
+      parameters:
+      - description: список названий судов
+        in: body
+        name: VesselNames
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/domain.Vessel'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: успешно обновлённые суда
+          schema:
+            items:
+              $ref: '#/definitions/domain.Vessel'
+            type: array
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Изменение судна
+      tags:
+      - Vessel
+securityDefinitions:
+  BearerAuth:
+    description: Insert your access token default (Bearer access_token_here)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
