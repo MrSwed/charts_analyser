@@ -21,7 +21,7 @@ func NewRequest(c config.Out, l *zap.Logger) *RequestService {
 	return &RequestService{c: c, l: l}
 }
 
-func (s *RequestService) SendTrack(ctx context.Context, vesselID appDomain.VesselID, location appDomain.Point) {
+func (s *RequestService) SendTrack(ctx context.Context, location appDomain.Point) {
 	var err error
 
 	var body []byte
@@ -67,7 +67,7 @@ func (s *RequestService) SetControl(ctx context.Context, vesselID appDomain.Vess
 
 	urlStr := s.c.ServerAddress + constant.RouteMonitor
 	var req *http.Request
-	if req, err = http.NewRequest("POST", urlStr, bytes.NewBuffer(body)); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, "POST", urlStr, bytes.NewBuffer(body)); err != nil {
 		s.l.Error("http.NewRequest", zap.Error(err), zap.Any("url", urlStr))
 		return
 	}

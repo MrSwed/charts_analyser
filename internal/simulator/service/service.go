@@ -3,7 +3,6 @@ package service
 import (
 	appDomain "charts_analyser/internal/app/domain"
 	"charts_analyser/internal/simulator/config"
-	"charts_analyser/internal/simulator/constant"
 	"charts_analyser/internal/simulator/domain"
 	"charts_analyser/internal/simulator/repository"
 	"context"
@@ -30,7 +29,7 @@ func NewService(r *repository.Repository, c *config.Config, l *zap.Logger) *Serv
 }
 
 type Request interface {
-	SendTrack(ctx context.Context, vesselID appDomain.VesselID, location appDomain.Point)
+	SendTrack(ctx context.Context, location appDomain.Point)
 	SetControl(ctx context.Context, vesselID appDomain.VesselID)
 }
 
@@ -72,10 +71,9 @@ func (s *Service) SimulateVessel(ctx context.Context, vessel *domain.VesselItem)
 		case <-time.After(nextTime):
 			track := vessel.TrackShift()
 
-			s.SendTrack(ctx, vessel.ID, track.Location)
+			s.SendTrack(ctx, track.Location)
 
 			if len(vessel.Tracks()) < 1 {
-				//q.Start, q.Finish = q.Finish, historyTimeNowFinish(q.Finish)
 				tracks, err := s.GetTrack(ctx, q)
 				if err != nil {
 					s.l.Error("Get tracks err", zap.Error(err), zap.Any("q", q))
@@ -98,12 +96,4 @@ func historyTimeNowStart(t time.Time) *time.Time {
 	n := time.Now()
 	nt := time.Date(t.Year(), t.Month(), t.Day(), n.Hour(), n.Minute(), n.Second(), 0, n.Location())
 	return &nt
-}
-
-func historyTimeNowFinish(start *time.Time) *time.Time {
-	if start == nil {
-		return nil
-	}
-	t := start.Add(constant.DefaultTracksSecondsCache * time.Second)
-	return &t
 }

@@ -62,7 +62,7 @@ func main() {
 		logger.Fatal("GetRandomVessels: no results ")
 	}
 	wg.Add(len(vessels))
-	var ids []int64
+	var ids = make([]int64, 0, len(vessels))
 	for _, v := range vessels {
 		ids = append(ids, int64(v.ID))
 		// go run service vessel simulation

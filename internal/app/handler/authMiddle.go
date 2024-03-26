@@ -49,7 +49,9 @@ func GetVesselID(c *fiber.Ctx) (id domain.VesselID) {
 
 func GetTokenClaims(c *fiber.Ctx) (claims jwt.MapClaims) {
 	if u := c.Locals(constant.CtxStorageKey); u != nil {
-		claims = u.(*jwt.Token).Claims.(jwt.MapClaims)
+		if cl, ok := u.(*jwt.Token); ok {
+			claims, _ = cl.Claims.(jwt.MapClaims)
+		}
 	}
 	if claims == nil {
 		claims = jwt.MapClaims{}

@@ -36,11 +36,13 @@ func (v CurrentZone) Value() (driver.Value, error) {
 
 func (v *CurrentZone) Scan(src interface{}) error {
 	var source []byte
-	if reflect.ValueOf(src).Kind() == reflect.String {
-		source = []byte(src.(string))
-	} else {
+	switch srcV := src.(type) {
+	case string:
+		source = []byte(srcV)
+	default:
 		source = src.([]byte)
 	}
+
 	err := json.Unmarshal(source, v)
 	if err != nil {
 		return err
