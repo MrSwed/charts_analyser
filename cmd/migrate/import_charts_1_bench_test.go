@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"errors"
+	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/require"
 	"io"
 	"log"
 	"os"
@@ -13,14 +15,13 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"testing"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 )
 
-// importChart
-// Импорт: файл-транзакция
-func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint64, err error) {
+// importChartFile
+// Импорт: 1 файл - 1 транзакция
+func importChartFile(ctx context.Context, fileName string, db *sqlx.DB) (count uint64, err error) {
 	var file *os.File
 	file, err = os.Open(fileName)
 	if err != nil {
@@ -105,9 +106,9 @@ func importChart(ctx context.Context, fileName string, db *sqlx.DB) (count uint6
 	return
 }
 
-// importCharts
+// importChartsSemaphore
 // Разбрасываем импорт по файл-горутинам
-func importCharts(ctx context.Context, path string, db *sqlx.DB) (filesCount, recordsCount uint64) {
+func importChartsSemaphore(ctx context.Context, path string, db *sqlx.DB) (filesCount, recordsCount uint64) {
 	var (
 		entries       []os.DirEntry
 		wg            sync.WaitGroup
@@ -128,7 +129,7 @@ func importCharts(ctx context.Context, path string, db *sqlx.DB) (filesCount, re
 			defer wg.Done()
 			defer sem.Release()
 
-			rCount, er := importChart(ctx, path+"/"+fileName, db)
+			rCount, er := importChartFile(ctx, path+"/"+fileName, db)
 			filesCountA.Add(1)
 			recordsCountA.Add(rCount)
 			if er != nil {
@@ -145,4 +146,51 @@ func importCharts(ctx context.Context, path string, db *sqlx.DB) (filesCount, re
 	recordsCount = recordsCountA.Load()
 	filesCount = filesCountA.Load()
 	return
+}
+
+/*
+cpu: Intel(R) Core(TM) i5-4430 CPU @ 3.00GHz
+Import 5024124 tracks from 100 files at 10m59.456550213s
+BenchmarkImportChartsSemaphore-4   	       1	659456623473 ns/op
+*/
+func BenchmarkImportChartsSemaphore(b *testing.B) {
+	var (
+		db         *sqlx.DB
+		err        error
+		benchStart = time.Now()
+	)
+	conf := NewConfig().WithEnv().CleanParameters()
+	if len(conf.DatabaseDSN) == 0 {
+		if conf.DatabaseDSN == "" {
+			println("DatabaseDSN is required")
+			os.Exit(1)
+		}
+	}
+	db, err = sqlx.Open("pgx", conf.DatabaseDSN)
+	require.NoError(b, err)
+
+	defer db.Close()
+
+	_, err = db.Exec(`
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS schema_migrations;
+DROP TABLE IF EXISTS vessels;
+DROP TABLE IF EXISTS tracks;
+DROP TABLE IF EXISTS control_log;
+DROP TABLE IF EXISTS control_dashboard;
+DROP TABLE IF EXISTS zones;
+`)
+	require.NoError(b, err)
+
+	versions, errM := Migrate(conf.MigrateDataPath, db.DB)
+	require.NoError(b, errM)
+	require.Equal(b, uint(0), versions[0])
+
+	ctx := context.Background()
+
+	log.Println("Start import tracks..")
+
+	var filesCount, recordsCount uint64
+	filesCount, recordsCount = importChartsSemaphore(ctx, conf.ChartsPath, db)
+	log.Printf("Import %d tracks from %d files at %s", recordsCount, filesCount, time.Since(benchStart))
 }
