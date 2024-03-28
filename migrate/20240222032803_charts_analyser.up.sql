@@ -1,3 +1,5 @@
+CREATE EXTENSION if not exists postgis;
+
 create table zones
 (
  name     varchar(20) not null

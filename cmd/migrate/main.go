@@ -26,7 +26,6 @@ func main() {
 			println("DatabaseDSN is required")
 			os.Exit(1)
 		}
-
 	}
 	if db, err = sqlx.Open("pgx", conf.DatabaseDSN); err != nil {
 		log.Printf("cannot connect db %s", err)

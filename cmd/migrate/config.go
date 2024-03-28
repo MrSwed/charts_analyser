@@ -43,6 +43,12 @@ func (c *Config) WithEnv() *Config {
 	if env, ok := os.LookupEnv(EnvNameMigratePath); ok {
 		c.MigrateDataPath = env
 	}
+	if env, ok := os.LookupEnv(EnvNameZonesFile); ok {
+		c.ZonesFile = env
+	}
+	if env, ok := os.LookupEnv(EnvNameChartsPath); ok {
+		c.ChartsPath = env
+	}
 	return c
 }
 
