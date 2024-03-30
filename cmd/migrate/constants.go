@@ -9,4 +9,6 @@ const (
 	DBZones   = "zones"
 	DBTracks  = "tracks"
 	DBVessels = "vessels"
+
+	ImportTransactionSize = 10000
 )
