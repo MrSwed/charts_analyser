@@ -148,9 +148,6 @@ func insertDataBench(ctx context.Context, db *sqlx.DB, csvRows [][]string) (rowI
 		if len(csvRow) == 0 {
 			continue
 		}
-		if err != nil {
-			return
-		}
 		timestamp, err := strconv.ParseInt(csvRow[0], 10, 64)
 		if err != nil {
 			log.Println("parse timestamp error: ", err.Error())
@@ -168,9 +165,7 @@ func insertDataBench(ctx context.Context, db *sqlx.DB, csvRows [][]string) (rowI
 			return
 		}
 		if _, err = stmtVessels.ExecContext(ctx, vesselID, vesselName); err != nil {
-			if err != nil {
-				log.Println("Insert vessel error: ", err.Error())
-			}
+			log.Println("Insert vessel error: ", err.Error())
 			return
 		}
 		rowInserted++
