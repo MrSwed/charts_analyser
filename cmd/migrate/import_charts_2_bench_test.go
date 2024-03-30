@@ -10,18 +10,14 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
 )
 
-const (
-	ImportWorkers         = 50
-	ImportTransactionSize = 10000
-)
-
-func dataFileNames(ctx context.Context, path string) (chan string, uint64) {
+func dataFileNamesBench(ctx context.Context, path string) (chan string, uint64) {
 	filesCh := make(chan string)
 	dirEntries, err := os.ReadDir(path)
 	if err != nil {
@@ -40,7 +36,7 @@ func dataFileNames(ctx context.Context, path string) (chan string, uint64) {
 	return filesCh, uint64(len(dirEntries))
 }
 
-func readFile(ctx context.Context, fileName string, pageSize int, csvRowsPageCh chan [][]string) {
+func readFileBench(ctx context.Context, fileName string, pageSize int, csvRowsPageCh chan [][]string) {
 	csvRowsPage := &[][]string{}
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -93,7 +89,7 @@ func readFile(ctx context.Context, fileName string, pageSize int, csvRowsPageCh 
 
 // readRows
 // read each file and send page of csvRow records
-func readRows(ctx context.Context, filesCh chan string, pageSize int) chan [][]string {
+func readRowsBench(ctx context.Context, filesCh chan string, pageSize int) chan [][]string {
 	csvRowsCh := make(chan [][]string)
 	go func() {
 		defer close(csvRowsCh)
@@ -103,7 +99,7 @@ func readRows(ctx context.Context, filesCh chan string, pageSize int) chan [][]s
 			case <-ctx.Done():
 				return
 			default:
-				readFile(ctx, fileName, pageSize, csvRowsCh)
+				readFileBench(ctx, fileName, pageSize, csvRowsCh)
 			}
 		}
 	}()
@@ -112,16 +108,16 @@ func readRows(ctx context.Context, filesCh chan string, pageSize int) chan [][]s
 
 // readFanOut
 // return csv row collection channels
-func readFanOut(ctx context.Context, filesCh chan string, numWorkers, pageSize int) []chan [][]string {
+func readFanOutBench(ctx context.Context, filesCh chan string, numWorkers, pageSize int) []chan [][]string {
 	csvRowsChs := make([]chan [][]string, numWorkers)
 	for i := 0; i < numWorkers; i++ {
-		csvRowsChs[i] = readRows(ctx, filesCh, pageSize)
+		csvRowsChs[i] = readRowsBench(ctx, filesCh, pageSize)
 	}
 
 	return csvRowsChs
 }
 
-func insertData(ctx context.Context, db *sqlx.DB, csvRows [][]string) (rowInserted uint64) {
+func insertDataBench(ctx context.Context, db *sqlx.DB, csvRows [][]string) (rowInserted uint64) {
 	var (
 		tx  *sqlx.Tx
 		err error
@@ -187,7 +183,7 @@ func insertData(ctx context.Context, db *sqlx.DB, csvRows [][]string) (rowInsert
 	return
 }
 
-func insertDBFanIn(ctx context.Context, db *sqlx.DB, csvRowsChs ...chan [][]string) chan uint64 {
+func insertDBFanInBench(ctx context.Context, db *sqlx.DB, csvRowsChs ...chan [][]string) chan uint64 {
 	finalCh := make(chan uint64)
 	var wg sync.WaitGroup
 
@@ -202,7 +198,7 @@ func insertDBFanIn(ctx context.Context, db *sqlx.DB, csvRowsChs ...chan [][]stri
 				case <-ctx.Done():
 					return
 				default:
-					finalCh <- insertData(ctx, db, data)
+					finalCh <- insertDataBench(ctx, db, data)
 				}
 			}
 		}(ch)
@@ -223,13 +219,13 @@ func importChartsPipelineWithWorkers(c context.Context, path string, db *sqlx.DB
 	var filesCh chan string
 
 	// stage 1: list of files to file-workers
-	filesCh, filesCount = dataFileNames(ctx, path)
+	filesCh, filesCount = dataFileNamesBench(ctx, path)
 
 	// stage 2: file-workers read each file and send to db-workers
-	dataCh := readFanOut(ctx, filesCh, ImportWorkers, ImportTransactionSize)
+	dataCh := readFanOutBench(ctx, filesCh, runtime.NumCPU(), ImportTransactionSize)
 
 	// stage 3: db-workers insert to db and send num of inserted rows to result channel
-	resultCh := insertDBFanIn(ctx, db, dataCh...)
+	resultCh := insertDBFanInBench(ctx, db, dataCh...)
 
 	// stage 4: get count of success inserted rows
 	for res := range resultCh {
@@ -237,16 +233,6 @@ func importChartsPipelineWithWorkers(c context.Context, path string, db *sqlx.DB
 	}
 
 	return
-}
-
-func finishImportMigrate(ctx context.Context, db *sqlx.DB) {
-	if _, err := db.ExecContext(ctx, "update "+DBVessels+" set created_at = COALESCE((select min(time) from "+DBTracks+" t where t.vessel_id = vessels.id), vessels.created_at)"); err != nil {
-		log.Print(err.Error())
-	}
-
-	if _, err := db.ExecContext(ctx, "select setval('"+DBVessels+"_id_seq', (SELECT MAX(id) FROM "+DBVessels+"))"); err != nil {
-		log.Print(err.Error())
-	}
 }
 
 /*
@@ -292,6 +278,5 @@ DROP TABLE IF EXISTS zones;
 
 	var filesCount, recordsCount uint64
 	filesCount, recordsCount = importChartsPipelineWithWorkers(ctx, conf.ChartsPath, db)
-	finishImportMigrate(ctx, db)
 	log.Printf("Import %d tracks from %d files at %s", recordsCount, filesCount, time.Since(benchStart))
 }

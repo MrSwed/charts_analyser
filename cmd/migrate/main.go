@@ -74,5 +74,7 @@ func main() {
 
 	wg.Wait()
 
+	finishImportMigrate(ctx, db)
+
 	log.Println("Import done")
 }
