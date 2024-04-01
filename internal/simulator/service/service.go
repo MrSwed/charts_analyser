@@ -44,7 +44,10 @@ type Vessels interface {
 func (s *Service) SimulateVessel(ctx context.Context, vessel *domain.VesselItem) {
 	var q appDomain.InputVesselsInterval
 	q.VesselIDs = appDomain.VesselIDs{vessel.ID}
-	q.Start = historyTimeNowStart(vessel.CreatedAt)
+	n := time.Now()
+	n = time.Date(vessel.CreatedAt.Year(), vessel.CreatedAt.Month(), vessel.CreatedAt.Day(),
+		n.Hour(), n.Minute(), n.Second(), 0, n.Location())
+	q.Start = &n
 	tracks, err := s.GetTrack(ctx, q)
 	if err != nil {
 		s.l.Error("No start tracks", zap.Error(err))
@@ -90,10 +93,4 @@ func (s *Service) SimulateVessel(ctx context.Context, vessel *domain.VesselItem)
 			q.Start = &tracks[0].Timestamp
 		}
 	}
-}
-
-func historyTimeNowStart(t time.Time) *time.Time {
-	n := time.Now()
-	nt := time.Date(t.Year(), t.Month(), t.Day(), n.Hour(), n.Minute(), n.Second(), 0, n.Location())
-	return &nt
 }

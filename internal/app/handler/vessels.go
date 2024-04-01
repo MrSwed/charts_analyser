@@ -109,7 +109,6 @@ func (h *Handler) GetVessel() fiber.Handler {
 		)
 		if err = c.QueryParser(&query); err != nil {
 			c.Status(http.StatusBadRequest)
-			h.log.Error("Get vessels, query", zap.Any("query", c.Request().RequestURI()), zap.Error(err))
 			return nil
 		}
 		ctx, cancel := context.WithTimeout(c.Context(), constant.ServerOperationTimeout)
