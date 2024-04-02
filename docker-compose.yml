@@ -1,6 +1,6 @@
 services:
   postgis:
-    image: postgis/postgis
+    image: postgis/postgis:16-3.4-alpine
     restart: always
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
