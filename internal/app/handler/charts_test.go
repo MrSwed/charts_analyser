@@ -16,8 +16,8 @@ import (
 	"time"
 )
 
-func TestChartZones(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestChartZones() {
+	t := suite.T()
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
 	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2017-01-09 00:00:00`)
@@ -44,7 +44,7 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": int64(conf.VesselID),
+					"vesselIDs": int64(suite.cfg.VesselID),
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -60,12 +60,12 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": int64(conf.VesselID),
+					"vesselIDs": int64(suite.cfg.VesselID),
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -77,12 +77,12 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": []domain.VesselID{conf.VesselID},
+					"vesselIDs": []domain.VesselID{suite.cfg.VesselID},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -96,12 +96,12 @@ func TestChartZones(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				body: map[string]interface{}{
-					"vesselIDs": []string{strconv.FormatInt(int64(conf.VesselID), 10)},
+					"vesselIDs": []string{strconv.FormatInt(int64(suite.cfg.VesselID), 10)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -118,7 +118,7 @@ func TestChartZones(t *testing.T) {
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -144,7 +144,7 @@ func TestChartZones(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -188,9 +188,8 @@ func TestChartZones(t *testing.T) {
 	}
 }
 
-func TestChartVessels(t *testing.T) {
-
-	zoneName := "zone_40"
+func (suite *HandlerTestSuite) TestChartVessels() {
+	t := suite.T()
 	timeStart, err := time.Parse("2006-01-02 03:04:05", `2017-01-08 00:00:00`)
 	require.NoError(t, err)
 	timeEnd, err := time.Parse("2006-01-02 03:04:05", `2017-01-09 00:00:00`)
@@ -218,7 +217,7 @@ func TestChartVessels(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				query: map[string]interface{}{
-					"zoneNames": []string{zoneName},
+					"zoneNames": []string{string(suite.cfg.ZoneName)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
@@ -234,12 +233,12 @@ func TestChartVessels(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				query: map[string]interface{}{
-					"zoneNames": []string{zoneName},
+					"zoneNames": []string{string(suite.cfg.ZoneName)},
 					"start":     timeStart.Format(time.RFC3339),
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -258,7 +257,7 @@ func TestChartVessels(t *testing.T) {
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -277,7 +276,7 @@ func TestChartVessels(t *testing.T) {
 					"finish":    timeEnd.Format(time.RFC3339),
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -300,7 +299,7 @@ func TestChartVessels(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -344,8 +343,9 @@ func TestChartVessels(t *testing.T) {
 	}
 }
 
-func TestTrack(t *testing.T) {
-	claimsUnknownVessel := domain.NewClaimVessels(&conf.JWT, domain.VesselID(10000000000), "")
+func (suite *HandlerTestSuite) TestTrack() {
+	t := suite.T()
+	claimsUnknownVessel := domain.NewClaimVessels(&suite.cfg.JWT, domain.VesselID(10000000000), "")
 	jwtUnknownVessel, err := claimsUnknownVessel.Token()
 	require.NoError(t, err)
 
@@ -394,7 +394,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []float64{12.12, 12.12},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -407,7 +407,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []float64{12.12, 12.12},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -421,7 +421,7 @@ func TestTrack(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -434,7 +434,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []string{"12.12", "12.12"},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -459,7 +459,7 @@ func TestTrack(t *testing.T) {
 				method: http.MethodPost,
 				query:  []int64{},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -496,7 +496,7 @@ func TestTrack(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte

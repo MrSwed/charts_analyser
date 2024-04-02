@@ -14,9 +14,8 @@ import (
 	"testing"
 )
 
-func TestVesselState(t *testing.T) {
-
-	vesselID := int64(9110913)
+func (suite *HandlerTestSuite) TestVesselState() {
+	t := suite.T()
 
 	type want struct {
 		code            int
@@ -39,7 +38,7 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. No jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -51,9 +50,9 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. Wrong role in jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -61,12 +60,12 @@ func TestVesselState(t *testing.T) {
 			},
 		},
 		{
-			name: "Control vessel. User",
+			name: "Control vessel. Ok",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -79,9 +78,9 @@ func TestVesselState(t *testing.T) {
 			name: "Control vessel. Bad vessel ids",
 			args: args{
 				method: http.MethodPost,
-				query:  []string{strconv.FormatInt(vesselID, 10)},
+				query:  []string{strconv.FormatInt(int64(suite.cfg.VesselID), 10)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -94,7 +93,7 @@ func TestVesselState(t *testing.T) {
 				method: http.MethodPost,
 				query:  []int64{10000000000},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -120,7 +119,7 @@ func TestVesselState(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -164,8 +163,8 @@ func TestVesselState(t *testing.T) {
 	}
 }
 
-func TestMonitoredList(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestMonitoredList() {
+	t := suite.T()
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -198,7 +197,7 @@ func TestMonitoredList(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -210,7 +209,7 @@ func TestMonitoredList(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -235,7 +234,7 @@ func TestMonitoredList(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -279,8 +278,8 @@ func TestMonitoredList(t *testing.T) {
 	}
 }
 
-func TestSetControl(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestSetControl() {
+	t := suite.T()
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -302,7 +301,7 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. No jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -314,9 +313,9 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Wrong role in jwt",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -324,12 +323,12 @@ func TestSetControl(t *testing.T) {
 			},
 		},
 		{
-			name: "Set control. User",
+			name: "Set control. Ok",
 			args: args{
 				method: http.MethodPost,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -342,9 +341,9 @@ func TestSetControl(t *testing.T) {
 			name: "Set control. Bad vessel ids",
 			args: args{
 				method: http.MethodPost,
-				query:  []string{strconv.FormatInt(int64(conf.VesselID), 10)},
+				query:  []string{strconv.FormatInt(int64(suite.cfg.VesselID), 10)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -356,7 +355,7 @@ func TestSetControl(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -369,7 +368,7 @@ func TestSetControl(t *testing.T) {
 				method: http.MethodPost,
 				query:  []int64{10000000000},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -393,7 +392,7 @@ func TestSetControl(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -432,8 +431,8 @@ func TestSetControl(t *testing.T) {
 	}
 }
 
-func TestDeleteControl(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestDeleteControl() {
+	t := suite.T()
 	type want struct {
 		code            int
 		responseLen     *bool
@@ -452,10 +451,10 @@ func TestDeleteControl(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Set control. No jwt",
+			name: "Delete control. No jwt",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 			},
 			want: want{
 				code:        http.StatusUnauthorized,
@@ -467,9 +466,9 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Wrong role in jwt",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -480,9 +479,9 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. User",
 			args: args{
 				method: http.MethodDelete,
-				query:  []int64{int64(conf.VesselID)},
+				query:  []int64{int64(suite.cfg.VesselID)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -495,9 +494,9 @@ func TestDeleteControl(t *testing.T) {
 			name: "Delete control. Bad vessel ids",
 			args: args{
 				method: http.MethodDelete,
-				query:  []string{strconv.FormatInt(int64(conf.VesselID), 10)},
+				query:  []string{strconv.FormatInt(int64(suite.cfg.VesselID), 10)},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -509,7 +508,7 @@ func TestDeleteControl(t *testing.T) {
 			args: args{
 				method: http.MethodDelete,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -522,7 +521,7 @@ func TestDeleteControl(t *testing.T) {
 				method: http.MethodDelete,
 				query:  []int64{10000000000},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -546,7 +545,7 @@ func TestDeleteControl(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte

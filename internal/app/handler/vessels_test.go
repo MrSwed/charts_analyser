@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-func TestAddVessel(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestAddVessel() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []string{"Test1 Vessel_" + timeID, "Test2 Vessel_" + timeID}
 
@@ -57,7 +57,7 @@ func TestAddVessel(t *testing.T) {
 				method: http.MethodPost,
 				body:   newVessels,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -70,7 +70,7 @@ func TestAddVessel(t *testing.T) {
 				method: http.MethodPost,
 				body:   newVessels,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -84,7 +84,7 @@ func TestAddVessel(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -97,7 +97,7 @@ func TestAddVessel(t *testing.T) {
 				method: http.MethodPost,
 				body:   []interface{}{12.12, "vessel name"},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -111,7 +111,7 @@ func TestAddVessel(t *testing.T) {
 				body:   append(newVessels, newVessels...),
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -137,7 +137,7 @@ func TestAddVessel(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -176,13 +176,13 @@ func TestAddVessel(t *testing.T) {
 	}
 }
 
-func TestDeleteVessel(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestDeleteVessel() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := suite.srv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
 	require.Equal(t, len(newVessels), len(vessels))
 
@@ -221,7 +221,7 @@ func TestDeleteVessel(t *testing.T) {
 				method: http.MethodDelete,
 				body:   vessels.IDs(),
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -234,7 +234,7 @@ func TestDeleteVessel(t *testing.T) {
 				method: http.MethodDelete,
 				body:   vessels.IDs(),
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -248,7 +248,7 @@ func TestDeleteVessel(t *testing.T) {
 			args: args{
 				method: http.MethodDelete,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -261,7 +261,7 @@ func TestDeleteVessel(t *testing.T) {
 				method: http.MethodDelete,
 				body:   []interface{}{12.12, "vessel name", 1555444},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -275,7 +275,7 @@ func TestDeleteVessel(t *testing.T) {
 				body:   append(vessels.IDs(), vessels.IDs()...),
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -301,7 +301,7 @@ func TestDeleteVessel(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -340,15 +340,15 @@ func TestDeleteVessel(t *testing.T) {
 	}
 }
 
-func TestRestoreVessel(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestRestoreVessel() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := suite.srv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
-	err = serv.Vessel.SetDeleteVessels(ctx, true, vessels.IDs()...)
+	err = suite.srv.Vessel.SetDeleteVessels(ctx, true, vessels.IDs()...)
 	require.NoError(t, err)
 
 	type want struct {
@@ -386,7 +386,7 @@ func TestRestoreVessel(t *testing.T) {
 				method: http.MethodPatch,
 				body:   vessels.IDs(),
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -399,7 +399,7 @@ func TestRestoreVessel(t *testing.T) {
 				method: http.MethodPatch,
 				body:   vessels.IDs(),
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -413,7 +413,7 @@ func TestRestoreVessel(t *testing.T) {
 			args: args{
 				method: http.MethodPatch,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -426,7 +426,7 @@ func TestRestoreVessel(t *testing.T) {
 				method: http.MethodPatch,
 				body:   []interface{}{12.12, "vessel name", 1555444},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -440,7 +440,7 @@ func TestRestoreVessel(t *testing.T) {
 				body:   append(vessels.IDs(), vessels.IDs()...),
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -466,7 +466,7 @@ func TestRestoreVessel(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -505,13 +505,13 @@ func TestRestoreVessel(t *testing.T) {
 	}
 }
 
-func TestGetVessel(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestGetVessel() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := suite.srv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
 	require.Equal(t, len(newVessels), len(vessels))
 	type want struct {
@@ -549,7 +549,7 @@ func TestGetVessel(t *testing.T) {
 				method: http.MethodGet,
 				query:  map[string]interface{}{"vesselIDs": vessels.IDs()},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -557,12 +557,28 @@ func TestGetVessel(t *testing.T) {
 			},
 		},
 		{
-			name: "Get vessel. OK",
+			name: "Get vessel. testdata",
+			args: args{
+				method: http.MethodGet,
+				query:  map[string]interface{}{"vesselIDs": suite.cfg.VesselID},
+				headers: map[string]string{
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
+				},
+			},
+			want: want{
+				code:            http.StatusOK,
+				responseLen:     &[]bool{true}[0],
+				responseContain: suite.cfg.VesselID.String(),
+				contentType:     "application/json",
+			},
+		},
+		{
+			name: "Get vessel. created",
 			args: args{
 				method: http.MethodGet,
 				query:  map[string]interface{}{"vesselIDs": vessels.IDs()},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -577,7 +593,7 @@ func TestGetVessel(t *testing.T) {
 			args: args{
 				method: http.MethodGet,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -593,7 +609,7 @@ func TestGetVessel(t *testing.T) {
 				method: http.MethodGet,
 				query:  map[string]interface{}{"vesselIDs": []interface{}{12.12, "vessel name", 1555444}},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -607,7 +623,7 @@ func TestGetVessel(t *testing.T) {
 				query:  map[string]interface{}{"vesselIDs": append(vessels.IDs(), vessels.IDs()...)},
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -651,7 +667,7 @@ func TestGetVessel(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -690,13 +706,13 @@ func TestGetVessel(t *testing.T) {
 	}
 }
 
-func TestUpdateVessel(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestUpdateVessel() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newVessels := []domain.VesselName{domain.VesselName("Test1 Vessel_" + timeID), domain.VesselName("Test2 Vessel_" + timeID)}
 
 	ctx := context.Background()
-	vessels, err := serv.Vessel.AddVessel(ctx, newVessels...)
+	vessels, err := suite.srv.Vessel.AddVessel(ctx, newVessels...)
 	require.NoError(t, err)
 	require.Equal(t, len(newVessels), len(vessels))
 
@@ -735,7 +751,7 @@ func TestUpdateVessel(t *testing.T) {
 				method: http.MethodPut,
 				body:   vessels,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtVessel,
+					"Authorization": "Bearer " + suite.cfg.jwtVessel,
 				},
 			},
 			want: want{
@@ -748,7 +764,7 @@ func TestUpdateVessel(t *testing.T) {
 				method: http.MethodPut,
 				body:   vessels,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -763,7 +779,7 @@ func TestUpdateVessel(t *testing.T) {
 			args: args{
 				method: http.MethodPut,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -776,7 +792,7 @@ func TestUpdateVessel(t *testing.T) {
 				method: http.MethodPut,
 				body:   map[string]interface{}{"vesselIDs": []interface{}{12.12, "vessel name", 1555444}},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -790,7 +806,7 @@ func TestUpdateVessel(t *testing.T) {
 				body:   domain.Vessels{{ID: 10050000, Name: "NotExist Vessel"}},
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -817,7 +833,7 @@ func TestUpdateVessel(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte

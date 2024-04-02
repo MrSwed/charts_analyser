@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-func TestAddUser(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestAddUser() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	newUser := domain.UserChange{
 		Login:    domain.UserLogin("Test1_user_" + timeID),
@@ -29,7 +29,7 @@ func TestAddUser(t *testing.T) {
 		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, &existUser)
+	id, err := suite.srv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -68,7 +68,7 @@ func TestAddUser(t *testing.T) {
 				method: http.MethodPost,
 				body:   newUser,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -81,7 +81,7 @@ func TestAddUser(t *testing.T) {
 				method: http.MethodPost,
 				body:   newUser,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -95,7 +95,7 @@ func TestAddUser(t *testing.T) {
 			args: args{
 				method: http.MethodPost,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -112,7 +112,7 @@ func TestAddUser(t *testing.T) {
 					Role:     2,
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -125,7 +125,7 @@ func TestAddUser(t *testing.T) {
 				method: http.MethodPost,
 				body:   []interface{}{12.12, "user name"},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -142,7 +142,7 @@ func TestAddUser(t *testing.T) {
 					Role:     2,
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -161,7 +161,7 @@ func TestAddUser(t *testing.T) {
 				},
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -187,7 +187,7 @@ func TestAddUser(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -226,8 +226,8 @@ func TestAddUser(t *testing.T) {
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestDeleteUser() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	existUser := domain.UserChange{
 		Login:    domain.UserLogin("Test1_delete_user_" + timeID),
@@ -235,7 +235,7 @@ func TestDeleteUser(t *testing.T) {
 		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, &existUser)
+	id, err := suite.srv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -274,7 +274,7 @@ func TestDeleteUser(t *testing.T) {
 				method: http.MethodDelete,
 				body:   []domain.UserID{*existUser.ID},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -287,7 +287,7 @@ func TestDeleteUser(t *testing.T) {
 				method: http.MethodDelete,
 				body:   []domain.UserID{*existUser.ID},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -301,7 +301,7 @@ func TestDeleteUser(t *testing.T) {
 			args: args{
 				method: http.MethodDelete,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -314,7 +314,7 @@ func TestDeleteUser(t *testing.T) {
 				method: http.MethodDelete,
 				body:   []interface{}{12.12, "user name", 1555444},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -338,7 +338,7 @@ func TestDeleteUser(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -377,8 +377,8 @@ func TestDeleteUser(t *testing.T) {
 	}
 }
 
-func TestRestoreUser(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestRestoreUser() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	existUser := domain.UserChange{
 		Login:    domain.UserLogin("Test1_delete_user_" + timeID),
@@ -386,10 +386,10 @@ func TestRestoreUser(t *testing.T) {
 		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, &existUser)
+	id, err := suite.srv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
-	err = serv.User.SetDeletedUser(ctx, true, id)
+	err = suite.srv.User.SetDeletedUser(ctx, true, id)
 	require.NoError(t, err)
 
 	type want struct {
@@ -427,7 +427,7 @@ func TestRestoreUser(t *testing.T) {
 				method: http.MethodPatch,
 				body:   []domain.UserID{*existUser.ID},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -440,7 +440,7 @@ func TestRestoreUser(t *testing.T) {
 				method: http.MethodPatch,
 				body:   []domain.UserID{*existUser.ID},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -454,7 +454,7 @@ func TestRestoreUser(t *testing.T) {
 			args: args{
 				method: http.MethodPatch,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -467,7 +467,7 @@ func TestRestoreUser(t *testing.T) {
 				method: http.MethodPatch,
 				body:   []interface{}{12.12, "user name", 1555444},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -491,7 +491,7 @@ func TestRestoreUser(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -530,8 +530,8 @@ func TestRestoreUser(t *testing.T) {
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestUpdateUser() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	existUser := domain.UserChange{
 		Login:    domain.UserLogin("Test2_user_" + timeID),
@@ -539,7 +539,7 @@ func TestUpdateUser(t *testing.T) {
 		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, &existUser)
+	id, err := suite.srv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -578,7 +578,7 @@ func TestUpdateUser(t *testing.T) {
 				method: http.MethodPut,
 				body:   existUser,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtOperator,
+					"Authorization": "Bearer " + suite.cfg.jwtOperator,
 				},
 			},
 			want: want{
@@ -591,7 +591,7 @@ func TestUpdateUser(t *testing.T) {
 				method: http.MethodPut,
 				body:   existUser,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -610,7 +610,7 @@ func TestUpdateUser(t *testing.T) {
 					Role:  2,
 				},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -624,7 +624,7 @@ func TestUpdateUser(t *testing.T) {
 			args: args{
 				method: http.MethodPut,
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -637,7 +637,7 @@ func TestUpdateUser(t *testing.T) {
 				method: http.MethodPut,
 				body:   map[string]interface{}{"userIDs": []interface{}{12.12, "user name", 1555444}},
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -656,7 +656,7 @@ func TestUpdateUser(t *testing.T) {
 				},
 
 				headers: map[string]string{
-					"Authorization": "Bearer " + conf.jwtAdmin,
+					"Authorization": "Bearer " + suite.cfg.jwtAdmin,
 				},
 			},
 			want: want{
@@ -680,7 +680,7 @@ func TestUpdateUser(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
@@ -719,8 +719,8 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
-func TestLogin(t *testing.T) {
-
+func (suite *HandlerTestSuite) TestLogin() {
+	t := suite.T()
 	timeID := time.Now().Format(time.RFC3339Nano)
 	notExistLogin := domain.LoginForm{
 		Login:    domain.UserLogin("Test1_user_" + timeID),
@@ -736,7 +736,7 @@ func TestLogin(t *testing.T) {
 		Role:     2,
 	}
 	ctx := context.Background()
-	id, err := serv.AddUser(ctx, &existUser)
+	id, err := suite.srv.AddUser(ctx, &existUser)
 	require.NoError(t, err)
 	existUser.ID = &id
 
@@ -815,7 +815,7 @@ func TestLogin(t *testing.T) {
 				}
 			}
 
-			res, err := app.Test(request)
+			res, err := suite.app.Test(request)
 			require.NoError(t, err)
 
 			var resBody []byte
