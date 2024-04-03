@@ -1,0 +1,89 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - 5000:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    networks:
+      charts:
+  migrate:
+    depends_on:
+      postgis:
+        condition: service_healthy
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: migrate
+    volumes:
+      - ./data:/app/data
+      - ./migrate:/app/migrate
+    environment:
+      - DATABASE_DSN=${DATABASE_DSN}
+      - CHARTS_PATH=${CHARTS_PATH}
+      - MIGRATE_PATH=${MIGRATE_PATH}
+      - GEO_ZONES=${GEO_ZONES}
+    networks:
+      charts:
+  server:
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: server
+    environment:
+      - DATABASE_DSN=${DATABASE_DSN}
+      - ADDRESS=${LISTEN_ADDRESS}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    ports:
+      - ${LISTEN_PORT}:${LISTEN_PORT}
+    networks:
+      charts:
+  simulator:
+    depends_on:
+      server:
+        condition: service_started
+        required: true
+    environment:
+      - SLEEP_BEFORE_RUN=${SLEEP_BEFORE_RUN}
+      - DATABASE_DSN=${DATABASE_DSN}
+      - ADDRESS=${SERVER_ADDRESS}
+      - VESSEL_COUNT=${VESSEL_COUNT}
+      - TRACK_INTERVAL=${TRACK_INTERVAL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: simulator
+    networks:
+      charts:
+  swagger:
+    restart: unless-stopped
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: swagger
+    environment:
+      - SWAGGER_PORT=${SWAGGER_PORT}
+    ports:
+      - ${SWAGGER_PORT}:${SWAGGER_PORT}
+    networks:
+      charts:
+networks:
+  charts:
+volumes:
+  pgdata:
