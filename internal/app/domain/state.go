@@ -91,6 +91,19 @@ func (d Duration) MarshalJSON() (b []byte, err error) {
 	return json.Marshal(d.String())
 }
 
+func (d *Duration) UnmarshalJSON(data []byte) error {
+	v, err := strconv.Unquote(string(data))
+	if err != nil {
+		return err
+	}
+	vv, err := time.ParseDuration(v)
+	if err != nil {
+		return err
+	}
+	*d = Duration(vv)
+	return nil
+}
+
 // Point 	(0 - lon, 1 - ltd)
 type Point [2]float64
 

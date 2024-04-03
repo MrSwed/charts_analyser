@@ -136,7 +136,7 @@ func (suite *HandlerTestSuite) TestVesselState() {
 			if strings.Contains(test.want.contentType, "application/json") {
 				var data []domain.VesselState
 				err = json.Unmarshal(resBody, &data)
-				require.NoError(t, err)
+				require.NoError(t, err, string(resBody))
 				if test.want.responseLen != nil {
 					if *test.want.responseLen {
 						assert.Greater(t, len(resBody), 0)
